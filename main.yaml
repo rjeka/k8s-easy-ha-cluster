@@ -3,8 +3,6 @@
   become: yes
   become_method: sudo
 
-
-
   tasks:
     - name: Add gpg key
       apt_key:
@@ -43,18 +41,18 @@
     - etcdIp1: "{{ hostvars[groups['masters'][0]]['ansible_aggi']['ipv4']['address'] }}"
     - etcdIp2: "{{ hostvars[groups['masters'][1]]['ansible_aggi']['ipv4']['address'] }}"
     - etcdIP3: "{{ hostvars[groups['masters'][2]]['ansible_aggi']['ipv4']['address'] }}"
-    - etcdName1: "{{ hostvars[groups['masters'][0]]['ansible_hostname']"
+    - etcdName1: "{{ hostvars[groups['masters'][0]]['ansible_hostname'] }}"
+    - etcdName2: "{{ hostvars[groups['masters'][1]]['ansible_hostname'] }}"
+    - etcdName3: "{{ hostvars[groups['masters'][2]]['ansible_hostname'] }}"
 
   tasks:
     - name: Installing keepalived
       apt:
         name: keepalived
 
-    - name: Get the etcd cluster members IP
-      shell: |
-        echo {{ etcdIp1 }} && \
-        echo {{ etcdIp2 }} && \
-        echo {{ etcdIp2 }}
+    - name: Get etcd ansible_hostname
+      debug:
+        msg: "http://{{ansible_aggi.ipv4.address}}:2379"
       tags: test
 
     - include_role:

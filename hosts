@@ -2,9 +2,9 @@
 containerType=containerd
 
 [masters]
-10.73.68.60  keepalived=MASTER etcdName=prod-fashion001
-10.73.71.148
-10.73.69.212
+master1 ansible_host=10.73.68.60  keepalived=MASTER
+master2 ansible_host=10.73.71.148 keepalived=BACKUP
+master3 ansible_host=10.73.69.212 keepalived=BACKUP
 
 [masters:vars]
 criContainersVersion=1.1.0-rc.0
