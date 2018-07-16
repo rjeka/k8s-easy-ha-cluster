@@ -1,0 +1,14 @@
+[all:vars]
+containerType=containerd
+
+[masters]
+10.73.68.60  keepalived=MASTER etcdName=prod-fashion001
+10.73.71.148
+10.73.69.212
+
+[masters:vars]
+criContainersVersion=1.1.0-rc.0
+etcd_version=v3.1.12
+etcdIp-host1
+etcdIp-host2
+etcdIp-host3

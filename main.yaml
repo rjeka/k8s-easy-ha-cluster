@@ -1,0 +1,61 @@
+- name: Installing shared packages for the masters and work nodes
+  hosts: all
+  become: yes
+  become_method: sudo
+
+
+
+  tasks:
+    - name: Add gpg key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Add kubernetes repositorie
+      apt_repository:
+        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+
+
+    - name: Installing kubeadm, kubelet, kubectl, and shared packages
+      apt:
+        name: "{{ item }}"
+        update_cache: yes
+      with_items:
+      - kubelet
+      - kubeadm
+      - kubectl
+      - unzip
+      - tar
+      - apt-transport-https
+      - btrfs-tools
+      - libseccomp2
+      - socat
+      - util-linux
+      - mc
+
+- name: Setting Up kubernetes msters
+  hosts: masters
+  become: yes
+  become_method: sudo
+
+  vars:
+    - etcdIp1: "{{ hostvars[groups['masters'][0]]['ansible_aggi']['ipv4']['address'] }}"
+    - etcdIp2: "{{ hostvars[groups['masters'][1]]['ansible_aggi']['ipv4']['address'] }}"
+    - etcdIP3: "{{ hostvars[groups['masters'][2]]['ansible_aggi']['ipv4']['address'] }}"
+    - etcdName1: "{{ hostvars[groups['masters'][0]]['ansible_hostname']"
+
+  tasks:
+    - name: Installing keepalived
+      apt:
+        name: keepalived
+
+    - name: Get the etcd cluster members IP
+      shell: |
+        echo {{ etcdIp1 }} && \
+        echo {{ etcdIp2 }} && \
+        echo {{ etcdIp2 }}
+      tags: test
+
+    - include_role:
+        name: containerd

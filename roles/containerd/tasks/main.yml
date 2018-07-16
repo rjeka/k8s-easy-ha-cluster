@@ -1,0 +1,32 @@
+---
+
+
+- name: Create dirs
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /opt/archives
+    - /etc/containerd
+
+- name: Download cri-containerd
+  get_url:
+    url: "https://storage.googleapis.com/cri-containerd-release/cri-containerd-{{criContainersVersion}}.linux-amd64.tar.gz"
+    dest: "/opt/archives/cri-containerd-{{criContainersVersion}}.linux-amd64.tar.gz"
+
+- name: Unpack cri-containerd
+  unarchive:
+    src: "/opt/archives/cri-containerd-{{criContainersVersion}}.linux-amd64.tar.gz"
+    dest: /
+    remote_src: true
+
+- name: Containerd plugin settings
+  template:
+    src: config.toml.j2
+    dest: "/etc/containerd/config.toml"
+
+- name: Enable & start containerd
+  systemd:
+    name: containerd
+    state: started
+    enabled: yes
