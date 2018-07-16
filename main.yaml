@@ -4,6 +4,10 @@
   become_method: sudo
 
   tasks:
+    - name: Instal pre packages
+      apt:
+        name: apt-transport-https
+
     - name: Add gpg key
       apt_key:
         url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
@@ -25,7 +29,6 @@
       - kubectl
       - unzip
       - tar
-      - apt-transport-https
       - btrfs-tools
       - libseccomp2
       - socat
@@ -37,14 +40,6 @@
   become: yes
   become_method: sudo
 
-  vars:
-    - etcdIp1: "{{ hostvars[groups['masters'][0]]['ansible_aggi']['ipv4']['address'] }}"
-    - etcdIp2: "{{ hostvars[groups['masters'][1]]['ansible_aggi']['ipv4']['address'] }}"
-    - etcdIP3: "{{ hostvars[groups['masters'][2]]['ansible_aggi']['ipv4']['address'] }}"
-    - etcdName1: "{{ hostvars[groups['masters'][0]]['ansible_hostname'] }}"
-    - etcdName2: "{{ hostvars[groups['masters'][1]]['ansible_hostname'] }}"
-    - etcdName3: "{{ hostvars[groups['masters'][2]]['ansible_hostname'] }}"
-
   tasks:
     - name: Installing keepalived
       apt:
@@ -52,8 +47,21 @@
 
     - name: Get etcd ansible_hostname
       debug:
-        msg: "http://{{ansible_aggi.ipv4.address}}:2379"
-      tags: test
+        msg: "{{etcdIp1}}"
 
     - include_role:
         name: containerd
+
+- name: Setting Up kubernetes msters
+  hosts: master1
+  become: yes
+  become_method: sudo
+
+  vars:
+    - etcdName1: "{{ hostvars[groups['masters'][0]]['ansible_hostname'] }}"
+    - etcdName2: "{{ hostvars[groups['masters'][1]]['ansible_hostname'] }}"
+    - etcdName3: "{{ hostvars[groups['masters'][2]]['ansible_hostname'] }}"
+
+  tasks:
+  - include_role:
+      name: etcd
