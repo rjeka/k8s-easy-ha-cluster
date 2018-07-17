@@ -5,11 +5,16 @@
   with_items:
     - /opt/archives
 
+- name: Get etcd archive
+  get_url:
+    url: https://github.com/coreos/etcd/releases/download/{{etcd_version}}/etcd-{{etcd_version}}-linux-amd64.tar.gz
+    dest: /opt/archives/etcd-{{etcd_version}}-linux-amd64.tar.gz
 
 - name: Get and unpack etcd
   shell: |
-    curl -sSL https://github.com/coreos/etcd/releases/download/{{etcd_version}}/etcd-{{etcd_version}}-linux-amd64.tar.gz \
-    | tar -xzv --strip-components=1 -C /usr/local/bin/
+    tar -xvf etcd-v3.1.17-linux-amd64.tar.gz -C /opt/test --strip-components=1
+  args:
+    chdir: /opt/archives
 
 - name: Create systemd service for etcd
   template:
