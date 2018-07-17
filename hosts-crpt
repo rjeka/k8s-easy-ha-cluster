@@ -1,0 +1,17 @@
+[all:vars]
+containerType=containerd
+
+[masters]
+master1 ansible_host=10.73.68.60  keepalived=MASTER ipLocal=10.73.68.60
+master2 ansible_host=10.73.71.148 keepalived=BACKUP ipLocal=10.73.71.148
+master3 ansible_host=10.73.69.212 keepalived=BACKUP ipLocal=10.73.69.212
+
+[masters:vars]
+etcdIp1=10.73.68.60
+etcdIp2=10.73.71.148
+etcdIp3=10.73.69.212
+
+etcd_version=v3.1.17
+etcdToken=9489bf67bdfe1b4ae067d6fd9e7efefd
+
+criContainersVersion=1.1.0-rc.0

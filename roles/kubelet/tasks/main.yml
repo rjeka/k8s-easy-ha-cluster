@@ -1,0 +1,43 @@
+    - name: Instal pre packages
+      apt:
+        name: apt-transport-https
+
+    - name: Add gpg key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Add kubernetes repositorie
+      apt_repository:
+        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+
+
+    - name: Installing kubeadm, kubelet, kubectl, and shared packages
+      apt:
+        name: "{{ item }}"
+        update_cache: yes
+      with_items:
+      - kubelet
+      - kubeadm
+      - kubectl
+      - unzip
+      - tar
+      - btrfs-tools
+      - libseccomp2
+      - socat
+      - util-linux
+      - mc
+      - curl
+
+    - name: Config kubelet to work with containerd
+      template:
+        src: 10-kubeadm.conf.tmpl
+        dest: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+    - name: Enable & start kubelet
+      systemd:
+        name: kubelet
+        state: started
+        enabled: yes
+        daemon_reload: yes

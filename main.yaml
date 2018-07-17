@@ -3,57 +3,16 @@
   become: yes
   become_method: sudo
 
+
   tasks:
-    - name: Instal pre packages
-      apt:
-        name: apt-transport-https
-
-    - name: Add gpg key
-      apt_key:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        state: present
-
-    - name: Add kubernetes repositorie
-      apt_repository:
-        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
-        state: present
-
-
-    - name: Installing kubeadm, kubelet, kubectl, and shared packages
-      apt:
+    - include_role:
         name: "{{ item }}"
-        update_cache: yes
       with_items:
       - kubelet
-      - kubeadm
-      - kubectl
-      - unzip
-      - tar
-      - btrfs-tools
-      - libseccomp2
-      - socat
-      - util-linux
-      - mc
+
 
 - name: Setting Up kubernetes msters
   hosts: masters
-  become: yes
-  become_method: sudo
-
-  tasks:
-    - name: Installing keepalived
-      apt:
-        name: keepalived
-
-    - name: Get etcd ansible_hostname
-      debug:
-        msg: "{{etcdIp1}}"
-
-    - include_role:
-        name: containerd
-
-- name: Setting Up kubernetes msters
-  hosts: master1
   become: yes
   become_method: sudo
 
@@ -62,6 +21,14 @@
     - etcdName2: "{{ hostvars[groups['masters'][1]]['ansible_hostname'] }}"
     - etcdName3: "{{ hostvars[groups['masters'][2]]['ansible_hostname'] }}"
 
+
   tasks:
-  - include_role:
-      name: etcd
+    - name: Installing keepalived
+      apt:
+        name: keepalived
+
+    - include_role:
+        name: "{{ item }}"
+      with_items:
+      - containerd
+      - etcd
