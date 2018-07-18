@@ -1,10 +1,14 @@
 [all:vars]
 containerType=containerd
+virtIp=10.73.71.68
+CIDR=192.168.0.0/16
+# kubernetes cluster token, you can use 'kubeadm token generate' to get a new one
+K8SHA_TOKEN=i2sbjw.is6l5m5a53y6v9nu
 
 [masters]
-master1 ansible_host=10.73.68.60  keepalived=MASTER ipLocal=10.73.68.60
-master2 ansible_host=10.73.71.148 keepalived=BACKUP ipLocal=10.73.71.148
-master3 ansible_host=10.73.69.212 keepalived=BACKUP ipLocal=10.73.69.212
+master1 ansible_host=10.73.68.60  keepalived=MASTER keepalivedPrio=102 keepalivedInterface=aggi ipLocal=10.73.68.60
+master2 ansible_host=10.73.71.148 keepalived=BACKUP keepalivedPrio=101 keepalivedInterface=aggi ipLocal=10.73.71.148
+master3 ansible_host=10.73.69.212 keepalived=BACKUP keepalivedPrio=100 keepalivedInterface=aggi ipLocal=10.73.69.212
 
 [masters:vars]
 etcdIp1=10.73.68.60
@@ -15,3 +19,5 @@ etcd_version=v3.1.17
 etcdToken=9489bf67bdfe1b4ae067d6fd9e7efefd
 
 criContainersVersion=1.1.0-rc.0
+
+keepalivedPass=56cf8dd754c90194d1600c483e10abfr

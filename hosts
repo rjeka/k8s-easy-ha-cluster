@@ -2,9 +2,9 @@
 containerType=containerd
 
 [masters]
-master1 ansible_host=212.92.98.21  keepalived=MASTER ipLocal=212.92.98.21
-master2 ansible_host=46.21.248.186 keepalived=BACKUP ipLocal=46.21.248.186
-master3 ansible_host=46.21.248.44 keepalived=BACKUP ipLocal=46.21.248.44
+master1 ansible_host=212.92.98.21  keepalived=MASTER keepalived=MASTER keepalivedPrio=102 keepalivedInterface=ens3 ipLocal=212.92.98.21
+master2 ansible_host=46.21.248.186 keepalived=BACKUP keepalived=MASTER keepalivedPrio=102 keepalivedInterface=ens3 ipLocal=46.21.248.186
+master3 ansible_host=46.21.248.44 keepalived=BACKUP keepalived=MASTER keepalivedPrio=102 keepalivedInterface=ens3 ipLocal=46.21.248.44
 
 [masters:vars]
 etcdIp1=212.92.98.21
@@ -15,3 +15,4 @@ etcd_version=v3.1.17
 etcdToken=9489bf77bdfe1b4ae067d6fd9e7efefd
 
 criContainersVersion=1.1.0-rc.0
+keepalivedPass=56cf8dd754c90194d1600c483e11abfr

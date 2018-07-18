@@ -1,6 +1,5 @@
 ---
 
-
 - name: Create dirs
   file:
     path: "{{ item }}"
@@ -22,7 +21,7 @@
 
 - name: Containerd plugin settings
   template:
-    src: config.toml.j2
+    src: config.toml.tmpl
     dest: "/etc/containerd/config.toml"
 
 - name: Enable & start containerd

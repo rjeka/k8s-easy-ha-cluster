@@ -1,0 +1,9 @@
+- name: Create kubeadm confih directory
+  file:
+    path: /opt/config/kubeadm
+    state: directory
+
+- name: Config kubeadm-init.yaml
+  template:
+    src: kubeadm-init.yaml.tmpl
+    dest: /opt/config/kubeadm/kubeadm-init.yaml

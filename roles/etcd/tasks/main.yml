@@ -18,7 +18,7 @@
 
 - name: Create systemd service for etcd
   template:
-    src: etcd.service.vb.j2
+    src: etcd.service.vb.tmpl
     dest: "/etc/systemd/system/etcd.service"
 
 - name: Create etcd env file

@@ -9,6 +9,7 @@
         name: "{{ item }}"
       with_items:
       - kubelet
+      - containerd
 
 
 - name: Setting Up kubernetes msters
@@ -23,12 +24,9 @@
 
 
   tasks:
-    - name: Installing keepalived
-      apt:
-        name: keepalived
-
     - include_role:
         name: "{{ item }}"
       with_items:
-      - containerd
       - etcd
+      - keepalived
+      - initMaster
