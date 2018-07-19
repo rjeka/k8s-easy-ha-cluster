@@ -12,13 +12,13 @@
 
 - name: Get and unpack etcd
   shell: |
-    tar -xvf etcd-v3.1.17-linux-amd64.tar.gz -C /opt/test --strip-components=1
+    tar -xvf etcd-{{etcd_version}}-linux-amd64.tar.gz -C /usr/local/bin/ --strip-components=1
   args:
     chdir: /opt/archives
 
 - name: Create systemd service for etcd
   template:
-    src: etcd.service.vb.tmpl
+    src: etcd.service.tmpl
     dest: "/etc/systemd/system/etcd.service"
 
 - name: Create etcd env file

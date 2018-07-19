@@ -12,7 +12,7 @@ vrrp_script chk_apiserver {
 vrrp_instance VI_1 {
     state {{keepalived}}
     interface {{keepalivedInterface}}
-    mcast_src_ip {{ipLocal}}
+    mcast_src_ip {{ansible_host}}
     virtual_router_id 51
     priority {{keepalivedPrio}}
     advert_int 2

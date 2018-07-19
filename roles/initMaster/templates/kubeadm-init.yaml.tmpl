@@ -12,7 +12,7 @@ apiServerCertSANs:
 - "{{ hostvars[groups['masters'][0]]['ansible_host'] }}"
 - "{{ hostvars[groups['masters'][1]]['ansible_host'] }}"
 - "{{ hostvars[groups['masters'][2]]['ansible_host'] }}"
-- {{virtIp}}
+- "{{virtIp}}"
 - 127.0.0.1
 etcd:
   endpoints:
@@ -26,3 +26,4 @@ feature-gates:
   CoreDNS: true
 token: {{K8SHA_TOKEN}}
 tokenTTL: "0"
+criSocket: /run/containerd/containerd.sock

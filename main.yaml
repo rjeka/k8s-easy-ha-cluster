@@ -17,16 +17,20 @@
   become: yes
   become_method: sudo
 
-  vars:
-    - etcdName1: "{{ hostvars[groups['masters'][0]]['ansible_hostname'] }}"
-    - etcdName2: "{{ hostvars[groups['masters'][1]]['ansible_hostname'] }}"
-    - etcdName3: "{{ hostvars[groups['masters'][2]]['ansible_hostname'] }}"
-
-
   tasks:
     - include_role:
         name: "{{ item }}"
       with_items:
       - etcd
       - keepalived
+
+- name: Init first cluster master
+  hosts: master1
+  become: yes
+  become_method: sudo
+
+  tasks:
+    - include_role:
+        name: "{{ item }}"
+      with_items:
       - initMaster
