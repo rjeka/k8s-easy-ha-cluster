@@ -1,0 +1,4 @@
+- name: erase etcd
+  hosts: masters
+  become: yes
+  become_method: sudo

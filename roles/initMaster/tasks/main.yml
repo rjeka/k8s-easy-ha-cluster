@@ -1,16 +1,19 @@
 - name: Reset Old Cluster
   shell: |
-    kubeadm reset --force \
-    && crictl stop $(crictl ps -a -q) \
-    && crictl rm $(crictl ps -a -q)
+    kubeadm reset --force
 
 - name: restart Keepalived
   systemd:
-    name: keepalived
-    state: started
+    name: "{{ item }}"
+    state: restarted
     enabled: yes
+  with_items:
+    - keepalived
+    - etcd
+    - kubelet
 
-- name: Create kubeadm confih directory
+
+- name: Create kubeadm config directory
   file:
     path: /opt/config/kubeadm
     state: directory
@@ -20,19 +23,12 @@
     src: kubeadm-init.yaml.tmpl
     dest: /opt/config/kubeadm/kubeadm-init.yaml
 
-- name: Create first master
+- name: pull k8s images
   shell: |
-    kubeadm init --config=kubeadm-init.yaml  --skip-preflight-checks
+    kubeadm config images pull
+
+- name: Create master node
+  shell: |
+    kubeadm init --config=kubeadm-init.yaml
   args:
     chdir: /opt/config/kubeadm/
-
-- name: Enable CLI Kubectl
-  shell: |
-    export KUBECONFIG=/etc/kubernetes/admin.conf
-
-- name: Copy cert to master2 and master2
-  synchronize:
-    src: /opt/test.txt
-    dest: /opt.test.txt
-    mode: pull
-  delegate_to: "{{hostvars[groups['masters'][1]]['ansible_host']}}"

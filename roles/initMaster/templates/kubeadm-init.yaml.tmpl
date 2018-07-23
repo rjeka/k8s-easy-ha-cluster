@@ -6,24 +6,20 @@ api:
 networking:
   podSubnet: {{CIDR}}
 apiServerCertSANs:
-- "{{ hostvars[groups['masters'][0]]['ansible_hostname'] }}"
-- "{{ hostvars[groups['masters'][1]]['ansible_hostname'] }}"
-- "{{ hostvars[groups['masters'][2]]['ansible_hostname'] }}"
-- "{{ hostvars[groups['masters'][0]]['ansible_host'] }}"
-- "{{ hostvars[groups['masters'][1]]['ansible_host'] }}"
-- "{{ hostvars[groups['masters'][2]]['ansible_host'] }}"
-- "{{virtIp}}"
+- {{ hostvars[groups['masters'][0]]['ansible_hostname'] }}
+- {{ hostvars[groups['masters'][1]]['ansible_hostname'] }}
+- {{ hostvars[groups['masters'][2]]['ansible_hostname'] }}
+- {{ hostvars[groups['masters'][0]]['ansible_host'] }}
+- {{ hostvars[groups['masters'][1]]['ansible_host'] }}
+- {{ hostvars[groups['masters'][2]]['ansible_host'] }}
+- {{virtIp}}
 - 127.0.0.1
 etcd:
   endpoints:
-  - "http://{{ hostvars[groups['masters'][0]]['ansible_host'] }}:2379"
-  - "http://{{ hostvars[groups['masters'][1]]['ansible_host'] }}:2379"
-  - "http://{{ hostvars[groups['masters'][2]]['ansible_host'] }}:2379"
+  - http://{{ hostvars[groups['masters'][0]]['ansible_host'] }}:2379
+  - http://{{ hostvars[groups['masters'][1]]['ansible_host'] }}:2379
+  - http://{{ hostvars[groups['masters'][2]]['ansible_host'] }}:2379
 apiServerExtraArgs:
-  apiserver-count: "{{ groups['masters'] | length }}"
-feature-gates:
-  DynamicKubeletConfig: true
-  CoreDNS: true
+  apiserver-count: "3"
 token: {{K8SHA_TOKEN}}
 tokenTTL: "0"
-criSocket: /run/containerd/containerd.sock

@@ -13,7 +13,7 @@
   apt:
     name: apt-transport-https
 
-- name: Add gpg key
+- name: Add kubernetes gpg key
   apt_key:
     url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
     state: present

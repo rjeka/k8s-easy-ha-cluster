@@ -1,0 +1,19 @@
+- name: Preinstall packages
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+  with_items:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - software-properties-common
+
+- name: Add docker gpg key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name:  Add docker repositorie & install docker
+  shell: |
+    add-apt-repository "deb https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" \ &&
+    apt-get update && apt-get install -y docker-ce=$(apt-cache madison docker-ce | grep 17.03 | head -1 | awk '{print $3}')
