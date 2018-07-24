@@ -1,3 +1,4 @@
+
 - name: Add tmp directory
   hosts: localhost
   gather_facts: no
@@ -46,10 +47,12 @@
   become_method: sudo
 
   tasks:
+    - name: Reset Old Cluster
+      shell: |
+        kubeadm reset --force
+
     - include_role:
-        name: "{{ item }}"
-      with_items:
-      - initMaster
+        name: initMaster
 
     - name: Get file names to copy
       shell: |
@@ -64,11 +67,13 @@
       with_items:
        - "{{ files_to_copy.stdout_lines }}"
 
-    #- name:  install Calico CIDR
-    #  shell: |
-    #    kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml && \
-    #    kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
-
+    - name:  install Calico CIDR
+      become_user: "{{ kubernetesUser }}"
+      shell: |
+        kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml && \
+        kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+      args:
+        executable: /bin/bash
 
 
 - name: Init other masters
@@ -77,6 +82,10 @@
   become_method: sudo
 
   tasks:
+    - name: Reset Old Cluster
+      shell: |
+        kubeadm reset --force
+
     - name: Create PKI directory
       file:
         path: /etc/kubernetes/pki/
@@ -87,7 +96,7 @@
 
     - name: copy certificate
       copy:
-        src:  /tmp/k8s/
+        src:  /tmp/k8s/master1/etc/kubernetes/pki/
         dest: /etc/kubernetes/pki/
       tags: test
 
