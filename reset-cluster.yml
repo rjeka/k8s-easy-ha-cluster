@@ -24,7 +24,15 @@
         path: /var/lib/etcd/
         state: absent
 
+    - name: Reset Kubernetes cluster and del all configs
+      shell: |
+        kubeadm reset --force
 
+    - name: Reset Kubernetes cluster and del all configs (containerd)
+      shell: |
+        kubeadm reset --force --cri-socket /run/containerd/containerd.sock
+      ignore_errors: yes
+      
     - name: started etcd
       systemd:
         name: etcd

@@ -1,0 +1,44 @@
+- name: Add repository
+  hosts: masters
+  become: yes
+  become_method: sudo
+  tasks:
+
+    - name: Preinstall packages
+      apt:
+        name: "{{ item }}"
+        update_cache: yes
+      with_items:
+      - apt-transport-https
+      - ca-certificates
+      - software-properties-common
+
+    - name: Add docker gpg key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name:  Get docker repositorie
+      shell: |
+        echo "deb https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
+      register: debString
+
+
+    - name: Add docker repo in /etc/apt/sources.list
+      lineinfile:
+        path: /etc/apt/sources.list
+        line: "{{debString.stdout}}"
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Get docker package version
+      shell: |
+        echo $(apt-cache madison docker-ce | grep 17.03 | head -1 | awk '{print $3}')
+      register: dockerPackage
+
+
+    - name:  Install Docker
+      apt:
+        name: "docker-ce={{dockerPackage.stdout}}"

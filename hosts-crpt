@@ -13,7 +13,7 @@ virtIp=10.73.71.68
 kubernetesUser=rodionov
 
 #Conainer runner type containerd or docker (docker is not working)
-containerType=containerd
+criType=containerd
 
 [masters:vars]
 #CIDR address space. When use calico is 192.168.0.0/16

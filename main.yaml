@@ -1,4 +1,5 @@
 
+#Add directory for cert
 - name: Add tmp directory
   hosts: localhost
   gather_facts: no
@@ -10,19 +11,32 @@
         state: directory
         force: yes
 
-
-- name: Installing shared packages for the masters and work nodes
+# Installing
+- name: Installing shared packages and Kubernetes for the masters and work nodes
   hosts: masters
   become: yes
   become_method: sudo
 
   tasks:
     - include_role:
-        name: "{{ item }}"
-      with_items:
-      - kubelet
-      - docker
+        name: kubelet
 
+
+- name: Installing CRI
+  hosts: masters
+  become: yes
+  become_method: sudo
+
+  tasks:
+    - name: Install docker
+      include_role:
+        name: docker
+      when: criType == "docker"
+
+    - name: Install containerd
+      include_role:
+        name: containerd
+      when: criType == "containerd"
 
 - name: Setting Up kubernetes msters
   hosts: masters
@@ -47,9 +61,15 @@
   become_method: sudo
 
   tasks:
-    - name: Reset Old Cluster
+    - name: Reset Old Cluster and del docker containers
       shell: |
         kubeadm reset --force
+      when: criType == "docker"
+
+    - name: Reset Old Cluster and del crictl containers
+      shell: |
+        kubeadm reset --force --cri-socket /run/containerd/containerd.sock
+      when: criType == "containerd"
 
     - include_role:
         name: initMaster
@@ -82,9 +102,15 @@
   become_method: sudo
 
   tasks:
-    - name: Reset Old Cluster
+    - name: Reset Old Cluster and del docker containers
       shell: |
         kubeadm reset --force
+      when: criType == "docker"
+
+    - name: Reset Old Cluster and del crictl containers
+      shell: |
+        kubeadm reset --force --cri-socket /run/containerd/containerd.sock
+      when: criType == "containerd"
 
     - name: Create PKI directory
       file:
