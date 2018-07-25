@@ -18,7 +18,8 @@
   become_method: sudo
 
   tasks:
-    - include_role:
+    - name: Install kubernetes
+      include_role:
         name: kubelet
 
 
@@ -38,7 +39,7 @@
         name: containerd
       when: criType == "containerd"
 
-- name: Setting Up kubernetes msters
+- name: Setting Up kubernetes masters
   hosts: masters
   become: yes
   become_method: sudo
@@ -71,8 +72,10 @@
         kubeadm reset --force --cri-socket /run/containerd/containerd.sock
       when: criType == "containerd"
 
-    - include_role:
+    - name: Init First master {{ansible_hostname}}
+      include_role:
         name: initMaster
+
 
     - name: Get file names to copy
       shell: |
@@ -126,5 +129,6 @@
         dest: /etc/kubernetes/pki/
       tags: test
 
-    - include_role:
+    - name: init {{ansible_hostname}}
+      include_role:
         name: initMaster

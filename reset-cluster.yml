@@ -32,7 +32,7 @@
       shell: |
         kubeadm reset --force --cri-socket /run/containerd/containerd.sock
       ignore_errors: yes
-      
+
     - name: started etcd
       systemd:
         name: etcd

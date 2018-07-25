@@ -4,6 +4,9 @@ master1 ansible_host=10.73.68.60  keepalived=MASTER keepalivedPrio=102 keepalive
 master2 ansible_host=10.73.71.148 keepalived=BACKUP keepalivedPrio=101 keepalivedInterface=aggi
 master3 ansible_host=10.73.69.212 keepalived=BACKUP keepalivedPrio=100 keepalivedInterface=aggi
 
+[worknodes]
+node1 ansible_host=10.73.70.84
+
 
 [all:vars]
 #Keepalived virtual IP
@@ -12,7 +15,7 @@ virtIp=10.73.71.68
 #Kubernetes user
 kubernetesUser=rodionov
 
-#Conainer runner type containerd or docker (docker is not working)
+#Conainer runner type. Containerd or docker
 criType=containerd
 
 [masters:vars]
