@@ -1,0 +1,28 @@
+- name: Create dir for token file
+  file:
+    path: /opt/config
+    state: directory
+
+- name: Copy kubeadm config file with token
+  copy:
+    src: /tmp/k8s/master1/opt/config/
+    dest: /opt/config/
+
+- name: change kubeadmin init string
+  shell: |
+    sed -i 's/$/ --cri-socket \/run\/containerd\/containerd.sock --skip-preflight-checks/' token.txt
+  args:
+    chdir: /opt/config/
+  when: criType == "containerd"
+
+- name: Kubeadm init worknode
+  shell: |
+    cat token.txt | bash
+  args:
+    chdir: /opt/config/
+
+- name: replace API server IP
+  replace:
+    dest: /etc/kubernetes/bootstrap-kubelet.conf
+    regexp: 'server: https://172.26.133.60:6443'
+    replace: 'server: https://{{virtIp}}:16443'

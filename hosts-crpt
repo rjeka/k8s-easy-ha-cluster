@@ -7,10 +7,13 @@ master3 ansible_host=10.73.69.212 keepalived=BACKUP keepalivedPrio=100 keepalive
 [worknodes]
 node1 ansible_host=10.73.70.84
 
+[local]
+localhost ansible_connection=local
 
 [all:vars]
 #Keepalived virtual IP
 virtIp=10.73.71.68
+criContainersVersion=1.1.0-rc.0
 
 #Kubernetes user
 kubernetesUser=rodionov
@@ -28,9 +31,5 @@ K8SHA_TOKEN=i2sbjw.is6l5m5a53y6v9nu
 etcd_version=v3.2.17
 etcdToken=9489bf67bdfe1b4ae067d6fd9e7efefd
 
-criContainersVersion=1.1.0-rc.0
 
 keepalivedPass=56cf8dd754c90194d1600c483e10abfr
-
-[local]
-localhost ansible_connection=local

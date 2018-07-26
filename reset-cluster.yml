@@ -30,7 +30,9 @@
 
     - name: Reset Kubernetes cluster and del all configs (containerd)
       shell: |
-        kubeadm reset --force --cri-socket /run/containerd/containerd.sock
+        kubeadm reset --force --cri-socket /run/containerd/containerd.sock \
+        && crictl stop $(crictl ps -a -q) \
+        && crictl rm $(crictl ps -a -q)
       ignore_errors: yes
 
     - name: started etcd

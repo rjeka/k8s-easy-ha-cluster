@@ -11,9 +11,9 @@
         state: directory
         force: yes
 
-# Installing
+# Installing Kubernetes
 - name: Installing shared packages and Kubernetes for the masters and work nodes
-  hosts: masters
+  hosts: masters:worknodes
   become: yes
   become_method: sudo
 
@@ -22,9 +22,9 @@
       include_role:
         name: kubelet
 
-
+#Installing CRI - conainerd or docker
 - name: Installing CRI
-  hosts: masters
+  hosts: masters:worknodes
   become: yes
   become_method: sudo
 
@@ -39,6 +39,7 @@
         name: containerd
       when: criType == "containerd"
 
+#Install the soft that is only needed on the masters
 - name: Setting Up kubernetes masters
   hosts: masters
   become: yes
@@ -56,6 +57,7 @@
         name: net.ipv4.ip_forward
         value: 1
 
+#Init First master
 - name: Init first cluster master
   hosts: master1
   become: yes
@@ -75,28 +77,6 @@
     - name: Init First master {{ansible_hostname}}
       include_role:
         name: initMaster
-
-
-    - name: Get file names to copy
-      shell: |
-        find /etc/kubernetes/pki -type f
-      register: files_to_copy
-
-
-    - name: Copy cert to ansiblehost
-      fetch:
-        src: "{{ item }}"
-        dest: /tmp/k8s/
-      with_items:
-       - "{{ files_to_copy.stdout_lines }}"
-
-    - name:  install Calico CIDR
-      become_user: "{{ kubernetesUser }}"
-      shell: |
-        kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml && \
-        kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
-      args:
-        executable: /bin/bash
 
 
 - name: Init other masters
@@ -127,8 +107,42 @@
       copy:
         src:  /tmp/k8s/master1/etc/kubernetes/pki/
         dest: /etc/kubernetes/pki/
-      tags: test
 
     - name: init {{ansible_hostname}}
       include_role:
         name: initMaster
+
+- name: Scale DNS to 2nd and 3rd master
+  hosts: master1
+
+  tasks:
+    - name: Pause while callico starts
+      pause:
+        prompt: "Wait starting CIDR and Kubernetes coredns"
+        seconds: 15
+
+    - name: Scale DNS
+      become_user: "{{ kubernetesUser }}"
+      shell: |
+        kubectl scale --replicas=4 -n kube-system deployment/coredns
+
+- name: Install nginx api-server loadbalancer
+  hosts: masters
+  become: yes
+  become_method: sudo
+
+  tasks:
+    - name: Install nginx
+      include_role:
+        name: nginx
+
+
+#- name: Add worknodes in cluster
+#  hosts: worknodes
+#  become: yes
+#  become_method: sudo
+
+#  tasks:
+#    - name: add node to Cluster
+#      include_role:
+#        name: addWorkNode

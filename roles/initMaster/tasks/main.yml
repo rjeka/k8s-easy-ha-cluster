@@ -1,12 +1,7 @@
 - name: restart Keepalived
   systemd:
-    name: "{{ item }}"
+    name: keepalived
     state: restarted
-    enabled: yes
-  with_items:
-    - keepalived
-    - etcd
-    - kubelet
 
 - name: Create kubeadm config directory
   file:
@@ -51,10 +46,27 @@
   when: criType == "containerd"
   register: kubernetesToken
 
-- name: Print kubernetes token
-  debug:
-    var: kubernetesToken
+- name: Reset kubernetes token file
+  file:
+    path: /opt/config/token.txt
+    state: absent
 
+- name: Create token file
+  file:
+    path: /opt/config/token.txt
+    state: touch
+    force: yes
+
+- name: Print kubernetes token
+  lineinfile:
+    path: /opt/config/token.txt
+    line: "{{ kubernetesToken.stdout_lines | last }}"
+
+- name: Copy init token to ansible host
+  fetch:
+    src: /opt/config/token.txt
+    dest: /tmp/k8s/
+  when: inventory_hostname == "master1"
 
 - name: Add export KUBECONFIG=/etc/kubernetes/admin.conf to bashrc
   lineinfile:
@@ -86,3 +98,26 @@
     owner: "{{ kubernetesUser }}"
     mode: 0755
     remote_src: True
+
+- name: Get file names to copy
+  shell: |
+    find /etc/kubernetes/pki -type f
+  register: files_to_copy
+  when: inventory_hostname == "master1"
+
+- name: Copy cert to ansiblehost
+  fetch:
+    src: "{{ item }}"
+    dest: /tmp/k8s/
+  with_items:
+   - "{{ files_to_copy.stdout_lines }}"
+  when: inventory_hostname == "master1"
+
+- name:  install Calico CIDR
+  become_user: "{{ kubernetesUser }}"
+  shell: |
+    kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml && \
+    kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+  args:
+    executable: /bin/bash
+  when: inventory_hostname == "master1"

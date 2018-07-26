@@ -1,9 +1,7 @@
 - name: Create dirs
   file:
-    path: "{{ item }}"
+    path: /opt/archives
     state: directory
-  with_items:
-    - /opt/archives
 
 - name: Get etcd archive
   get_url:
