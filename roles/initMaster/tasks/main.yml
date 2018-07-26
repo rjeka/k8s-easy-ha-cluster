@@ -19,12 +19,12 @@
     line: 'criSocket: /run/containerd/containerd.sock'
   when: criType == "containerd"
 
-- name: pull kimages of k8s with the docker
+- name: pull images of k8s with the docker
   shell: |
     kubeadm config images pull
   when: criType == "docker"
 
-- name: pull kimages of k8s with the crictl
+- name: pull images of k8s with the crictl
   shell: |
     kubeadm config images pull --cri-socket-path /run/containerd/containerd.sock
   when: criType == "containerd"

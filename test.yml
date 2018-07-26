@@ -1,30 +1,32 @@
-- name: Add worknodes in cluster
+- name: Change API IP address
   hosts: master1
   become: yes
   become_method: sudo
 
   tasks:
-    - name: Add nginx repo key
-      apt_key:
-        url: https://nginx.ru/keys/nginx_signing.key
-        state: present
+    - name: Create kube-proxy config file
+      file:
+        path: "{{ item }}"
+        owner: "{{ kubernetesUser }}"
+        mode: 0755
+        state: touch
+      with_items:
+        - /opt/config/kube-proxy.txt
+        - /opt/config/kube-dns.yaml
 
-    - name:  Get nginx repositorie deb
+    - name: Get kube-proxy config
+      become_user: "{{ kubernetesUser }}"
       shell: |
-        echo "deb http://nginx.org/packages/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
-      register: debString
+        kubectl get -n kube-system configmap/kube-proxy -o yaml > /opt/config/kube-dns.yaml
 
-    - name:  Get nginx repositorie deb-src
+    - name: Replace API server export
+      replace:
+        dest: /opt/config/kube-dns.yaml
+        regexp: '6443'
+        replace: '16443'
+
+    - name: Reconfigure kube-proxy
+      become_user: "{{ kubernetesUser }}"
       shell: |
-        echo "deb-src http://nginx.org/packages/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
-      register: debStringSrc
-
-    - name: Add nginx repo in /etc/apt/sources.list
-      lineinfile:
-        path: /etc/apt/sources.list
-        line: "{{debString.stdout}}"
-
-    - name: Add nginx repo in /etc/apt/sources.list
-      lineinfile:
-        path: /etc/apt/sources.list
-        line: "{{debStringSrc.stdout}}"
+        kubectl get pods --all-namespaces -o wide | grep proxy > /opt/config/kube-proxy.txt && \
+        kubectl delete pod -n kube-system $(awk '{print $2}' /opt/config/kube-proxy.txt)
