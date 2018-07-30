@@ -1,6 +1,6 @@
 - name: Add nginx repo key
   apt_key:
-    url: https://nginx.ru/keys/nginx_signing.key
+    url: https://nginx.org/keys/nginx_signing.key
     state: present
 
 - name:  Get nginx repositorie deb

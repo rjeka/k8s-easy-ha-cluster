@@ -4,12 +4,12 @@
   tasks:
     - name:  del local certificate
       file:
-        path: /var/lib/etcd
+        path: /tmp/k8s/
         state: absent
 
 
 - name: reset kubernetes and etcd cluster
-  hosts: masters
+  hosts: [masters, worknodes]
   become: yes
   become_method: sudo
 
@@ -18,11 +18,13 @@
       systemd:
         name: etcd
         state: stopped
+      when: group_names == "masters"
 
     - name: erase etcd database
       file:
         path: /var/lib/etcd/
         state: absent
+      when: group_names == "masters"
 
     - name: Reset Kubernetes cluster and del all configs
       shell: |
@@ -39,3 +41,4 @@
       systemd:
         name: etcd
         state: started
+      when: group_names == "masters"

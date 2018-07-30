@@ -24,7 +24,7 @@
 
 #Installing CRI - conainerd or docker
 - name: Installing CRI
-  hosts: masters:worknodes
+  hosts: [masters, worknodes]
   become: yes
   become_method: sudo
 
@@ -143,16 +143,16 @@
         state: touch
       with_items:
         - /opt/config/kube-proxy.txt
-        - /opt/config/kube-dns.yaml
+        - /opt/config/kube-api-configmap.yaml
 
     - name: Get kube-proxy config
       become_user: "{{ kubernetesUser }}"
       shell: |
-        kubectl get -n kube-system configmap/kube-proxy -o yaml > /opt/config/kube-dns.yaml
+        kubectl get -n kube-system configmap/kube-proxy -o yaml > /opt/config/kube-api-configmap.yaml
 
     - name: Replace API server export
       replace:
-        dest: /opt/config/kube-dns.yaml
+        dest: /opt/config/kube-api-configmap.yaml
         regexp: '6443'
         replace: '16443'
 
@@ -161,7 +161,6 @@
       shell: |
         kubectl get pods --all-namespaces -o wide | grep proxy > /opt/config/kube-proxy.txt && \
         kubectl delete pod -n kube-system $(awk '{print $2}' /opt/config/kube-proxy.txt)
-
 
 
 - name: Add worknodes in cluster

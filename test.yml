@@ -1,32 +1,9 @@
-- name: Change API IP address
-  hosts: master1
+- name: Add worknodes in cluster
+  hosts: worknodes
   become: yes
   become_method: sudo
 
   tasks:
-    - name: Create kube-proxy config file
-      file:
-        path: "{{ item }}"
-        owner: "{{ kubernetesUser }}"
-        mode: 0755
-        state: touch
-      with_items:
-        - /opt/config/kube-proxy.txt
-        - /opt/config/kube-dns.yaml
-
-    - name: Get kube-proxy config
-      become_user: "{{ kubernetesUser }}"
-      shell: |
-        kubectl get -n kube-system configmap/kube-proxy -o yaml > /opt/config/kube-dns.yaml
-
-    - name: Replace API server export
-      replace:
-        dest: /opt/config/kube-dns.yaml
-        regexp: '6443'
-        replace: '16443'
-
-    - name: Reconfigure kube-proxy
-      become_user: "{{ kubernetesUser }}"
-      shell: |
-        kubectl get pods --all-namespaces -o wide | grep proxy > /opt/config/kube-proxy.txt && \
-        kubectl delete pod -n kube-system $(awk '{print $2}' /opt/config/kube-proxy.txt)
+    - name: add node to Cluster
+      include_role:
+        name: addWorkNode
