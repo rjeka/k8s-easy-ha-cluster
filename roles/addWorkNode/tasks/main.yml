@@ -1,3 +1,4 @@
+
 - name: Reset Old Cluster and del docker containers
   shell: |
     kubeadm reset --force

@@ -1,0 +1,35 @@
+
+- name: Create dashboard config directory
+  file:
+    path: /opt/config/dashboard
+    state: directory
+
+- name: Get dashboard yaml file
+  get_url:
+    url: https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+    dest: /opt/config/dashboard/kubernetes-dashboard.yaml
+    owner: "{{ kubernetesUser }}"
+    mode: 0755
+
+- name: Create dashboard admin user role
+  template:
+    src: dashboard-adminUser.yaml.tmpl
+    dest: /opt/config/dashboard/dashboard-adminUser.yaml
+    owner: "{{ kubernetesUser }}"
+    mode: 0755
+
+- name: Add type NodePort in dashboard yaml file
+  lineinfile:
+    path: /opt/config/dashboard/kubernetes-dashboard.yaml
+    line: '  type: NodePort'
+
+- name: Add nodePort value in dashboard yaml file
+  lineinfile:
+    path: /opt/config/dashboard/kubernetes-dashboard.yaml
+    insertafter: 'targetPort: 8443'
+    line: '      nodePort: 30443'
+
+- name: Install Kubernetes dashboard
+  become_user: "{{ kubernetesUser }}"
+  shell: |
+    kubectl apply -f /opt/config/dashboard/

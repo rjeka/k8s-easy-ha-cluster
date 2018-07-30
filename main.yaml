@@ -159,6 +159,7 @@
     - name: Reconfigure kube-proxy
       become_user: "{{ kubernetesUser }}"
       shell: |
+        kubectl apply -f /opt/config/kube-api-configmap.yaml \ &&
         kubectl get pods --all-namespaces -o wide | grep proxy > /opt/config/kube-proxy.txt && \
         kubectl delete pod -n kube-system $(awk '{print $2}' /opt/config/kube-proxy.txt)
 
@@ -172,3 +173,17 @@
     - name: add node to Cluster
       include_role:
         name: addWorkNode
+
+- name: Deploy Kubernetes dashboard ans heapster
+  hosts: master1
+  become: yes
+  become_method: sudo
+
+  tasks:
+    - name: Install dashboard
+      include_role:
+        name: dashboard
+
+    - name: Install heapster
+      include_role:
+        name: heapster

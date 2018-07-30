@@ -1,9 +1,9 @@
-- name: Add worknodes in cluster
-  hosts: worknodes
+- name: Test dashboard
+  hosts: master1
   become: yes
   become_method: sudo
 
   tasks:
     - name: add node to Cluster
       include_role:
-        name: addWorkNode
+        name: heapster

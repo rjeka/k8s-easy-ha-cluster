@@ -18,13 +18,13 @@
       systemd:
         name: etcd
         state: stopped
-      when: group_names == "masters"
+      when: inventory_hostname in groups['masters']
 
     - name: erase etcd database
       file:
         path: /var/lib/etcd/
         state: absent
-      when: group_names == "masters"
+      when: inventory_hostname in groups['masters']
 
     - name: Reset Kubernetes cluster and del all configs
       shell: |
@@ -41,4 +41,4 @@
       systemd:
         name: etcd
         state: started
-      when: group_names == "masters"
+      when: inventory_hostname in groups['masters']
