@@ -48,6 +48,10 @@ vim hosts
 ```bash
 ansible-playbook -i hosts main.yaml
 ```
+После того как плейбук отработает, на экран будет выведенна информация о кластере
+images/cluster-info.png
+
+![GitHub Logo](images/cluster-info.png)
 
 ## Схема балансировки API:
 
