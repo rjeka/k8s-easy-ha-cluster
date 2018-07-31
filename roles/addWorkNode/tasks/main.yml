@@ -51,6 +51,7 @@
   with_items:
   - /etc/kubernetes/bootstrap-kubelet.conf
   - /etc/kubernetes/kubelet.conf
+  when: apiLoadBalancer == "true"
 
 - name: restart kubelet
   systemd:
@@ -58,11 +59,20 @@
     state: restarted
     enabled: yes
     daemon_reload: yes
+  when: apiLoadBalancer == "true"
 
 - name: restart CRI
   systemd:
-    name: kubelet
+    name: containerd
     state: restarted
     enabled: yes
     daemon_reload: yes
   when: criType == "containerd"
+
+- name: restart CRI
+  systemd:
+    name: docker
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  when: criType == "docker"

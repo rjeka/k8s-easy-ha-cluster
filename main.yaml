@@ -51,12 +51,17 @@
   become_method: sudo
 
   tasks:
-    - include_role:
+    - name: Install etcd and keepalived
+      include_role:
         name: "{{ item }}"
       with_items:
       - etcd
       - keepalived
-      - nginx
+
+    - name: Install nginx
+      include_role:
+        name: nginx
+      when: apiLoadBalancer == "true"
 
 
 #Init First master
@@ -138,34 +143,10 @@
   become: yes
   become_method: sudo
 
+
   tasks:
-    - name: Create kube-proxy config file
-      file:
-        path: "{{ item }}"
-        owner: "{{ kubernetesUser }}"
-        mode: 0755
-        state: touch
-      with_items:
-        - /opt/config/kube-proxy.txt
-        - /opt/config/kube-api-configmap.yaml
-
-    - name: Get kube-proxy config
-      become_user: "{{ kubernetesUser }}"
-      shell: |
-        kubectl get -n kube-system configmap/kube-proxy -o yaml > /opt/config/kube-api-configmap.yaml
-
-    - name: Replace API server export
-      replace:
-        dest: /opt/config/kube-api-configmap.yaml
-        regexp: '6443'
-        replace: '16443'
-
-    - name: Reconfigure kube-proxy
-      become_user: "{{ kubernetesUser }}"
-      shell: |
-        kubectl apply -f /opt/config/kube-api-configmap.yaml \ &&
-        kubectl get pods --all-namespaces -o wide | grep proxy > /opt/config/kube-proxy.txt && \
-        kubectl delete pod -n kube-system $(awk '{print $2}' /opt/config/kube-proxy.txt)
+    - include_tasks: tasks/changeApi.yml
+      when: apiLoadBalancer == "true"
 
 
 - name: Add worknodes in cluster

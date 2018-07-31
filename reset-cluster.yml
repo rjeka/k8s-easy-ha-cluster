@@ -42,3 +42,17 @@
         name: etcd
         state: started
       when: inventory_hostname in groups['masters']
+
+    - name: Purge nginx
+      apt:
+        name: nginx
+        state: absent
+      when: inventory_hostname in groups['masters']
+
+    - name: Purge docker
+      apt:
+        name: docker
+        state: absent
+      when:
+        - inventory_hostname in groups['masters']
+        - criType == "docker"
