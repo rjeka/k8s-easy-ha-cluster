@@ -1,1 +1,1 @@
-# Deploy k8s high availability ckuster
+# Deploy k8s high availability cluster
