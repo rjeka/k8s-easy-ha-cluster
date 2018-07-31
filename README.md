@@ -30,13 +30,25 @@ cd k8s-easy-ha-cluster
 vim hosts
 ```
 В файле hosts:
-- в группе хостов [masters] изменить значения ansible_host на IP адреса мастеров. 
+- в группе хостов [masters] изменить значения ansible_host на IP адреса мастеров.  
   keepalivedInterface - поменять на значение интерфейса, на котором будет работать API сервер kubernetes. На этом же       интерфейсе keepalived создаст subinterface c виртуальным IP
 - в группе хостов [worknodes]  изменить значения ansible_host на IP адреса рабочих нод
 - в блоке [all:vars]:
   - virtIp - виртуальный IP адрес keepalived
+  - apiLoadBalancer=true если вы хотите использовать схему с балансировкой API. (false - без балансировки)
+  - criType. containerd или docker, в зависимости какой CRI вы хотите использовать
+  - если используется containerd criContainersVersion=1.1.0-rc.0 (now stable 1.1.0-rc.0). Если docker то можно ничего не менять
+- [masters:vars]
+  - СIDR=192.168.0.0/16 для установки callica
+  - K8SHA_TOKEN токен для kubeadmin. Можно сгенерировать kubeadm token generate
+  - etcd_version=v3.2.17 
+  - etcdToken - токен etcd любое значение например 9489bf67bdfe1b4ae067d6fd9e7efefd
+  - eepalivedPass - праоль keepalived любое значение например 6cf8dd754c90194d1600c483e10abfr
 
+```bash
+ansible-playbook -i hosts main.yaml
+```
 
-## Схема развертывания:
+## Схема балансировки API:
 
 ![](https://habrastorage.org/webt/db/xm/pn/dbxmpnpsth-psiiyn_ittkfkc4a.png)
