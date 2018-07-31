@@ -80,10 +80,10 @@
     executable: /bin/bash
 
 - name: create kubernetes config directory
-  become_user: "{{ kubernetesUser }}"
   file:
     path: ~/.kube/
     state: directory
+  become: false
 
 - name: permissions for admin.conf
   file:
@@ -91,13 +91,12 @@
     mode: 0775
 
 - name: copy admin.conf to home directory
-  become_user: "{{ kubernetesUser }}"
   copy:
     src: /etc/kubernetes/admin.conf
     dest: "~/.kube/config"
-    owner: "{{ kubernetesUser }}"
     mode: 0755
     remote_src: True
+  become: false
 
 - name: Get file names to copy
   shell: |
@@ -114,10 +113,10 @@
   when: inventory_hostname == "master1"
 
 - name:  install Calico CIDR
-  become_user: "{{ kubernetesUser }}"
   shell: |
     kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml && \
     kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
   args:
     executable: /bin/bash
+  become: false
   when: inventory_hostname == "master1"

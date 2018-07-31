@@ -1,7 +1,6 @@
   - name: Create kube-proxy config file
     file:
       path: "{{ item }}"
-      owner: "{{ kubernetesUser }}"
       mode: 0755
       state: touch
     with_items:
@@ -10,7 +9,6 @@
 
 
   - name: Get kube-proxy config
-    become_user: "{{ kubernetesUser }}"
     shell: |
       kubectl get -n kube-system configmap/kube-proxy -o yaml > /opt/config/kube-api-configmap.yaml
 
@@ -19,9 +17,9 @@
       dest: /opt/config/kube-api-configmap.yaml
       regexp: '6443'
       replace: '16443'
+    become: true
 
   - name: Reconfigure kube-proxy
-    become_user: "{{ kubernetesUser }}"
     shell: |
       kubectl apply -f /opt/config/kube-api-configmap.yaml \ &&
       kubectl get pods --all-namespaces -o wide | grep proxy > /opt/config/kube-proxy.txt && \

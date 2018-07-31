@@ -22,9 +22,6 @@ criType=containerd
 #If you are using containerd, enter the version (now stable 1.1.0-rc.0)
 criContainersVersion=1.1.0-rc.0
 
-#Kubernetes user
-kubernetesUser=rodionov
-
 [masters:vars]
 #CIDR address space. When use calico is 192.168.0.0/16
 CIDR=192.168.0.0/16

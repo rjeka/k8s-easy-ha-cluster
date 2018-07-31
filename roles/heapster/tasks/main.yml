@@ -5,9 +5,10 @@
 
 
 - name: Install heapster
-  become_user: "{{ kubernetesUser }}"
+  become_user:
   shell: |
     kubectl apply -f deploy/kube-config/influxdb/ \
     && kubectl apply -f deploy/kube-config/rbac/heapster-rbac.yaml
   args:
     chdir: /opt/config/heapster
+  become: false

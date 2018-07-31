@@ -14,6 +14,13 @@
   become_method: sudo
 
   tasks:
+    - name: Purge nginx
+      apt:
+        name: nginx
+        state: absent
+      when:
+        - inventory_hostname in groups['masters']
+        - apiLoadBalancer == "true"
     - name: stop etcd
       systemd:
         name: etcd
@@ -37,17 +44,6 @@
         && crictl rm $(crictl ps -a -q)
       ignore_errors: yes
 
-    - name: started etcd
-      systemd:
-        name: etcd
-        state: started
-      when: inventory_hostname in groups['masters']
-
-    - name: Purge nginx
-      apt:
-        name: nginx
-        state: absent
-      when: inventory_hostname in groups['masters']
 
     - name: Purge docker
       apt:

@@ -133,20 +133,17 @@
         seconds: 15
 
     - name: Scale DNS
-      become_user: "{{ kubernetesUser }}"
       shell: |
         kubectl scale --replicas=4 -n kube-system deployment/coredns
+      become: false
 
 
 - name: Change API IP address
   hosts: master1
-  become: yes
-  become_method: sudo
-
 
   tasks:
-    - include_tasks: tasks/changeApi.yml
-      when: apiLoadBalancer == "true"
+  - include_tasks: tasks/сhangeAPI.yml
+    when: apiLoadBalancer == "true"
 
 
 - name: Add worknodes in cluster
@@ -185,12 +182,12 @@
       register: kubeadmToken
 
     - name: Get Dashboard admin token
-      become_user: "{{ kubernetesUser }}"
       shell: |
         kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}') | grep token:
       register: dashboardToken
+      become: false
 
-    - name: add node to Cluster
+    - name: Print Cluster info
       debug:
         msg: [
           "To enter new work nodes into the cluster, use the following command:",
