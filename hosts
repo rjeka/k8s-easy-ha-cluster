@@ -15,7 +15,7 @@ ingres1 ansible_host=10.73.69.15
 virtIp=10.73.69.11
 
 #Api Load balancer in masters
-apiLoadBalancer=false
+apiLoadBalancer=true
 
 #Conainer runner type. Containerd or docker
 criType=containerd
