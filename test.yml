@@ -1,26 +1,23 @@
-- name: Test dashboard
-  hosts: master1
-  become: yes
-  become_method: sudo
+- name: Cluster info
+  hosts: all
 
   tasks:
-    - name: Get kubeadmin token
-      shell: |
-        cat /opt/config/token.txt
-      register: kubeadmToken
+    - name: Delete downloaded files
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+      - /opt/archives
+      - /opt/config
+      when:
+        - inventory_hostname in groups['masters'] or inventory_hostname in groups['worknodes']
+        - garbageCollection == "true"
+      become: true
 
-    - name: Get Dashboard admin token
-      become_user: "{{ kubernetesUser }}"
-      shell: |
-        kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}') | grep token:
-      register: dashboardToken
-
-
-    - name: add node to Cluster
-      debug:
-        msg: [
-          "To enter new work nodes into the cluster, use the following command:",
-          "{{ kubeadmToken.stdout }}",
-          "Dashboard is available at: https://{{virtIp}}:30443",
-          "Admin {{dashboardToken.stdout}}"
-          ]
+    - name:  del local certificate
+      file:
+        path: /tmp/k8s/
+        state: absent
+      when:
+        - inventory_hostname == "localhost"
+        - garbageCollection == "true"

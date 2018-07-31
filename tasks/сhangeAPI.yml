@@ -1,11 +1,12 @@
   - name: Create kube-proxy config file
     file:
       path: "{{ item }}"
-      mode: 0755
+      mode: 0777
       state: touch
     with_items:
       - /opt/config/kube-proxy.txt
       - /opt/config/kube-api-configmap.yaml
+    become: yes
 
 
   - name: Get kube-proxy config
@@ -24,3 +25,12 @@
       kubectl apply -f /opt/config/kube-api-configmap.yaml \ &&
       kubectl get pods --all-namespaces -o wide | grep proxy > /opt/config/kube-proxy.txt && \
       kubectl delete pod -n kube-system $(awk '{print $2}' /opt/config/kube-proxy.txt)
+
+  - name: Create kube-proxy config file
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+    - /config/kube-proxy.txt
+    - /opt/config/kube-api-configmap.yaml
+    become: yes

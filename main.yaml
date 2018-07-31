@@ -170,6 +170,31 @@
       include_role:
         name: heapster
 
+
+- name: Garbage collection
+  hosts: all
+
+  tasks:
+    - name: Delete downloaded files
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+      - /opt/archives
+      - /opt/config
+      when:
+        - inventory_hostname in groups['masters'] or inventory_hostname in groups['worknodes']
+        - garbageCollection == "true"
+      become: true
+
+    - name:  del local certificate
+      file:
+        path: /tmp/k8s/
+        state: absent
+      when:
+        - inventory_hostname == "localhost"
+        - garbageCollection == "true"
+
 - name: Cluster info
   hosts: master1
   become: yes
