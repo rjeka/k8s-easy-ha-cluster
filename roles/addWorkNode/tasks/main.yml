@@ -67,7 +67,9 @@
     state: restarted
     enabled: yes
     daemon_reload: yes
-  when: criType == "containerd"
+  when:
+    - criType == "containerd"
+    - apiLoadBalancer == "true"
 
 - name: restart CRI
   systemd:
@@ -75,4 +77,6 @@
     state: restarted
     enabled: yes
     daemon_reload: yes
-  when: criType == "docker"
+  when:
+    - criType == "docker"
+    - apiLoadBalancer == "true"
