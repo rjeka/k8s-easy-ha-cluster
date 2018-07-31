@@ -66,6 +66,10 @@
   become_method: sudo
 
   tasks:
+    - name: install git
+      apt:
+        name: git
+
     - name: Reset Old Cluster and del docker containers
       shell: |
         kubeadm reset --force
@@ -187,3 +191,29 @@
     - name: Install heapster
       include_role:
         name: heapster
+
+- name: Cluster info
+  hosts: master1
+  become: yes
+  become_method: sudo
+
+  tasks:
+    - name: Get kubeadmin token
+      shell: |
+        cat /opt/config/token.txt
+      register: kubeadmToken
+
+    - name: Get Dashboard admin token
+      become_user: "{{ kubernetesUser }}"
+      shell: |
+        kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}') | grep token:
+      register: dashboardToken
+
+    - name: add node to Cluster
+      debug:
+        msg: [
+          "To enter new work nodes into the cluster, use the following command:",
+          "{{ kubeadmToken.stdout }}",
+          "Dashboard is available at: https://{{virtIp}}:30443",
+          "Admin {{dashboardToken.stdout}}"
+          ]
