@@ -1,0 +1,39 @@
+
+[masters]
+master1 ansible_host=10.73.69.12 keepalivedInterface=enp0s8
+master2 ansible_host=10.73.69.13 keepalivedInterface=enp0s8
+master3 ansible_host=10.73.69.14 keepalivedInterface=enp0s8
+
+[worknodes]
+node1 ansible_host=10.73.69.15
+
+[all:vars]
+#Keepalived virtual IP
+virtIp=10.73.69.11
+
+#Conainer runner type. Containerd or docker
+criType=containerd
+#If you are using containerd, enter the version (now stable 1.1.0-rc.0)
+criContainersVersion=1.1.0-rc.0
+
+#Kubernetes user
+kubernetesUser=rodionov
+
+[masters:vars]
+#CIDR address space. When use calico is 192.168.0.0/16
+CIDR=192.168.0.0/16
+
+# kubernetes cluster token, you can use 'kubeadm token generate' to get a new one
+K8SHA_TOKEN=i2sbjw.is6l5m5a53y6v9nu
+
+#Etcd version for kubernetes and kubeadm 1.11 etcd must be 3.2.17
+etcd_version=v3.2.17
+
+
+#Etcd cluster token
+etcdToken=9489bf67bdfe1b4ae067d6fd9e7efefd
+
+keepalivedPass=56cf8dd754c90194d1600c483e10abfr
+
+[local]
+localhost ansible_connection=local
