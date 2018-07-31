@@ -21,5 +21,9 @@ etcd:
   - http://{{ hostvars[groups['masters'][2]]['ansible_host'] }}:2379
 apiServerExtraArgs:
   apiserver-count: "3"
+{% if DynamicKubeletConfig == "true" %}
+feature-gates:
+  DynamicKubeletConfig: true
+{% endif %}
 token: {{K8SHA_TOKEN}}
 tokenTTL: "0"

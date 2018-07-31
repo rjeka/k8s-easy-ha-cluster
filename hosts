@@ -17,6 +17,8 @@ virtIp=10.73.69.11
 #Api Load balancer in masters
 apiLoadBalancer=true
 
+DynamicKubeletConfig=false
+
 #Conainer runner type. Containerd or docker
 criType=containerd
 #If you are using containerd, enter the version (now stable 1.1.0-rc.0)
