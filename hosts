@@ -17,13 +17,19 @@ virtIp=10.73.69.11
 #Api Load balancer in masters
 apiLoadBalancer=true
 
+#Install Helm
+helm=true
+
+#Dynamic config Api Server (true or false)
 DynamicKubeletConfig=true
 
 #Conainer runner type. Containerd or docker
 criType=containerd
+
 #If you are using containerd, enter the version (now stable 1.1.0-rc.0)
 criContainersVersion=1.1.0-rc.0
 
+#If you want to delete the config files, the CRI and ETCD archives are then true
 garbageCollection=true
 
 [masters:vars]

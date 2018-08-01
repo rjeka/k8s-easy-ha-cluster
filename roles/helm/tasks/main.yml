@@ -1,0 +1,25 @@
+- name: Get Helm tiller deploy files
+  get_url:
+    url: https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get
+    dest: /opt/config/helm.sh
+  become: yes
+
+- name: Install helm
+  shell: |
+    sh helm.sh
+  args:
+    chdir: /opt/config
+  become: true
+
+- name: Create Helm rbac config files
+  template:
+    src: rbac-config.yaml.tmpl
+    dest: /opt/config/rbac-config.yaml
+  become: true
+
+- name: Init Helm server
+  shell: |
+    kubectl apply -f rbac-config.yaml && \
+    helm init --service-account tiller
+  args:
+    chdir: /opt/config

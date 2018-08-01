@@ -156,6 +156,14 @@
       include_role:
         name: addWorkNode
 
+- name: Install ingress controller
+  hosts: master1
+
+  tasks:
+    - name: Install ingress controller
+      include_role:
+        name: ingress
+
 - name: Deploy Kubernetes dashboard ans heapster
   hosts: master1
   become: yes
@@ -171,6 +179,16 @@
         name: heapster
 
 
+- name: Install Helm
+  hosts: master1
+
+  tasks:
+    - name: Install Helm
+      include_role:
+        name: helm
+      when: helm == "true"
+
+
 - name: Garbage collection
   hosts: all
 
@@ -181,9 +199,13 @@
         state: absent
       with_items:
       - /opt/archives
-      - /opt/config
+      - /opt/config/dashboard
+      - /opt/config/heapster
+      - /opt/config/kube-proxy.txt
+      - /opt/config/rbac-config.yaml
+      - /opt/config/helm.sh
       when:
-        - inventory_hostname in groups['masters'] or inventory_hostname in groups['worknodes']
+        - inventory_hostname == "master1"
         - garbageCollection == "true"
       become: true
 

@@ -14,10 +14,23 @@
   become_method: sudo
 
   tasks:
+    - name: Reset Kubernetes cluster
+      shell: |
+        kubeadm reset --force
+      become: true
+
+    - name: Del all pods (containerd)
+      shell: |
+        crictl stop $(crictl ps -a -q) && \
+        crictl rm $(crictl ps -a -q)
+      when: criType == "containerd"
+      become: true
+
     - name: Purge nginx
       apt:
         name: nginx
         state: absent
+        purge: true
       when:
         - inventory_hostname in groups['masters']
         - apiLoadBalancer == "true"
@@ -27,6 +40,14 @@
         name: etcd
         state: stopped
       when: inventory_hostname in groups['masters']
+
+    - name: stop CRI containerd
+      systemd:
+        name: containerd
+        state: stopped
+      when:
+        - inventory_hostname in groups['masters']
+        -  criType == "containerd"
 
     - name: erase etcd database
       file:
@@ -77,15 +98,3 @@
       when:
         - inventory_hostname in groups['masters'] or inventory_hostname in groups['worknodes']
         - criType == "docker"
-
-
-    - name: Reset Kubernetes cluster and del all configs
-      shell: |
-        kubeadm reset --force
-
-    - name: Reset Kubernetes cluster and del all configs (containerd)
-      shell: |
-        kubeadm reset --force --cri-socket /run/containerd/containerd.sock \
-        && crictl stop $(crictl ps -a -q) \
-        && crictl rm $(crictl ps -a -q)
-      ignore_errors: yes
