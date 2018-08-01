@@ -1,3 +1,25 @@
 - name: Apply mandatory deployment
   shell: |
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
+
+- name: Get service-nodeport.yaml
+  get_url:
+    url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/baremetal/service-nodeport.yaml
+    dest: /opt/config/service-nodeport.yaml
+  become: yes
+
+- name: Add External Ip address
+  lineinfile:
+    path: /opt/config/service-nodeport.yaml
+    insertbefore: 'selector:'
+    line: "{{ item }}"
+  with_items:
+    - "  externalIPs:"
+    - "  - {{virtIp}}"
+  become: true
+
+- name: Apply ingress controller service
+  shell: |
+    kubectl apply -f service-nodeport.yaml
+  args:
+    chdir: /opt/config
