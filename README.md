@@ -38,6 +38,9 @@ vim hosts
   - apiLoadBalancer=true если вы хотите использовать схему с балансировкой API. (false - без балансировки)
   - criType. containerd или docker, в зависимости какой CRI вы хотите использовать
   - если используется containerd criContainersVersion=1.1.0-rc.0 (now stable 1.1.0-rc.0). Если docker то можно ничего не менять
+  - helm если хотите установить в кластер helm то true, если helm не нужен то false
+  - DynamicKubeletConfig - в версии kubernetes 1.11 появилась возможность динамического обновления конфигурации, если нужна то true, если нет то false
+  - garbageCollection - сборщик мусора, если true то с master1 удялятся скаченные архивы CRI и ETCD, все не нужные конфиг файлы,  останется только строка сгенерированная kubeadm в файле /opt/config/token.txt. Если false то все архивы и конфиги останутся
 - [masters:vars]
   - СIDR=192.168.0.0/16 для установки callica
   - K8SHA_TOKEN токен для kubeadmin. Можно сгенерировать kubeadm token generate
@@ -49,8 +52,6 @@ vim hosts
 ansible-playbook -i hosts main.yaml
 ```
 После того как плейбук отработает, на экран будет выведенна информация о кластере
-images/cluster-info.png
-
 ![GitHub Logo](images/cluster-info.png)
 
 ## Схема балансировки API:
