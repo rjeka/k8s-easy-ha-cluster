@@ -12,6 +12,7 @@
   hosts: [masters, worknodes]
   become: yes
   become_method: sudo
+  gather_facts: no
 
   tasks:
     - name: Reset Kubernetes cluster

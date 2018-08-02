@@ -35,6 +35,11 @@
         name: net.ipv4.ip_forward
         value: 1
 
+    - name: Entry DNS name node in /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: '{{ansible_host}} {{ansible_hostname}}'
+
     - name: Install docker
       include_role:
         name: docker
@@ -126,6 +131,7 @@
 
 - name: Scale DNS to 2nd and 3rd master
   hosts: master1
+  gather_facts: no
 
   tasks:
     - name: Pause while callico starts
@@ -159,6 +165,7 @@
 
 - name: Install ingress controller
   hosts: master1
+  gather_facts: no
 
   tasks:
     - name: Install ingress controller
