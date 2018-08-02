@@ -30,21 +30,21 @@
   when: criType == "containerd"
 
 
-- name: Create master node with Docker
-  shell: |
-    kubeadm init --config=kubeadm-init.yaml
-  args:
-    chdir: /opt/config/kubeadm/
-  when: criType == "docker"
-  register: kubernetesToken
-
 - name: Create master node with Containerd
   shell: |
     kubeadm init --config=kubeadm-init.yaml --skip-preflight-checks
   args:
     chdir: /opt/config/kubeadm/
   when: criType == "containerd"
-  register: kubernetesToken
+  register: kubernetesTokenCrictl
+
+- name: Create master node with Docker
+  shell: |
+    kubeadm init --config=kubeadm-init.yaml
+  args:
+    chdir: /opt/config/kubeadm/
+  when: criType == "docker"
+  register: kubernetesTokenDocker
 
 - name: Reset kubernetes token file
   file:
@@ -60,7 +60,15 @@
 - name: Print kubernetes token
   lineinfile:
     path: /opt/config/token.txt
-    line: "{{ kubernetesToken.stdout_lines | last }}"
+    line: "{{ kubernetesTokenCrictl.stdout_lines | last }}"
+  when: criType == "containerd"
+
+- name: Print kubernetes token
+  lineinfile:
+    path: /opt/config/token.txt
+    line: "{{ kubernetesTokenDocker.stdout_lines | last }}"
+  when: criType == "docker"
+
 
 - name: Copy init token to ansible host
   fetch:

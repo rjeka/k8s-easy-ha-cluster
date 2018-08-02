@@ -24,13 +24,13 @@ helm=true
 DynamicKubeletConfig=true
 
 #Conainer runner type. Containerd or docker
-criType=containerd
+criType=docker
 
 #If you are using containerd, enter the version (now stable 1.1.0-rc.0)
 criContainersVersion=1.1.0-rc.0
 
 #If you want to delete the config files, the CRI and ETCD archives are then true
-garbageCollection=true
+garbageCollection=false
 
 [masters:vars]
 #CIDR address space. When use calico is 192.168.0.0/16

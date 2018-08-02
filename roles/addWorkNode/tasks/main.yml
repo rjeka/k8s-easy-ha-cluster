@@ -1,3 +1,7 @@
+- name: Entry DNS node in /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: '{{ansible_host}} {{ansible_hostname}} {{ansible_hostname}}.cluster.local'
 
 - name: Reset Old Cluster and del docker containers
   shell: |
@@ -61,7 +65,7 @@
     daemon_reload: yes
   when: apiLoadBalancer == "true"
 
-- name: restart CRI
+- name: restart CRI containerd
   systemd:
     name: containerd
     state: restarted
@@ -71,7 +75,7 @@
     - criType == "containerd"
     - apiLoadBalancer == "true"
 
-- name: restart CRI
+- name: restart CRI docker
   systemd:
     name: docker
     state: restarted

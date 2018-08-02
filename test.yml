@@ -1,7 +1,16 @@
 - name: Cluster info
   hosts: master1
+  become: true
 
   tasks:
-    - name: helm
-      include_role:
-        name: ingress
+    - name: Create master node with Docker
+      shell: |
+        kubeadm init
+      args:
+        chdir: /opt/config/kubeadm/
+      when: criType == "docker"
+      register: kubernetesToken
+
+    - name: Print kubernetes token
+      debug:
+        msg:  "{{ kubernetesToken.stdout_lines | last }}"

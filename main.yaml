@@ -22,6 +22,7 @@
       include_role:
         name: kubelet
 
+
 #Installing CRI - conainerd or docker
 - name: Installing CRI
   hosts: [masters, worknodes]
@@ -204,6 +205,7 @@
       - /opt/config/kube-proxy.txt
       - /opt/config/rbac-config.yaml
       - /opt/config/helm.sh
+      - /opt/config/service-nodeport.yaml
       when:
         - inventory_hostname == "master1"
         - garbageCollection == "true"
