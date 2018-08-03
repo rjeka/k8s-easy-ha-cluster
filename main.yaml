@@ -169,6 +169,9 @@
 - name: Label ingress nodes
   hosts: master1
 
+  vars:
+    HOST_COUNT: "{{ groups['ingressnodes'] | length }}"
+
   tasks:
     - name:  Get gather_facts in ingressnodes
       setup:
@@ -181,7 +184,7 @@
         {% for HOST_NUMBER in range(groups['ingressnodes'] | length ) %}
           kubectl label nodes {{hostvars[groups['ingressnodes'][HOST_NUMBER]]['ansible_hostname']}} nodeType=ingress
         {% endfor %}
-      when: ingressHA == "true"
+      when:  HOST_COUNT > 0
 
 
 - name: Install ingress controller

@@ -18,7 +18,7 @@ virtIp=10.73.69.11
 apiLoadBalancer=true
 
 #Ingress HA on individual nodes
-ingressHA=true
+#ingressHA=true
 
 #Install Helm
 helm=true

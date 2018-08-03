@@ -15,6 +15,9 @@
   become_method: sudo
   gather_facts: no
 
+  vars:
+    HOST_COUNT: "{{ groups['ingressnodes'] | length }}"
+
   tasks:
     - name: Reset Kubernetes cluster
       shell: |
@@ -100,7 +103,7 @@
         - /opt/config/service-nodeport.yaml
         - /opt/config/mandatory.yaml
       when:
-        - ingressHA == "true"
+        - HOST_COUNT > 0
         - inventory_hostname == "master1"
 
     - name: Purge docker
