@@ -8,7 +8,7 @@ master3 ansible_host=10.73.69.14 keepalivedInterface=enp0s8
 node1 ansible_host=10.73.69.15
 
 [ingressnodes]
-ingres1 ansible_host=10.73.69.15
+ingres1 ansible_host=10.73.69.16
 
 [all:vars]
 #Keepalived virtual IP
@@ -17,6 +17,9 @@ virtIp=10.73.69.11
 #Api Load balancer in masters
 apiLoadBalancer=true
 
+#Ingress HA on individual nodes
+ingressHA=true
+
 #Install Helm
 helm=true
 
@@ -24,7 +27,7 @@ helm=true
 DynamicKubeletConfig=true
 
 #Conainer runner type. Containerd or docker
-criType=docker
+criType=containerd
 
 #If you are using containerd, enter the version (now stable 1.1.0-rc.0)
 criContainersVersion=1.1.0-rc.0

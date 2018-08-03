@@ -1,16 +1,37 @@
 - name: Cluster info
   hosts: master1
-  become: true
+  gather_facts: true
+
+  vars:
+    HOST_COUNT: "{{ groups['ingressnodes'] | length }}"
+
 
   tasks:
-    - name: Create master node with Docker
-      shell: |
-        kubeadm init
-      args:
-        chdir: /opt/config/kubeadm/
-      when: criType == "docker"
-      register: kubernetesToken
+    - name: Get mandatory deployment
+      get_url:
+        url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
+        dest: /opt/config/mandatory.yaml
+      when: ingressHA == "true"
+      become: true
 
-    - name: Print kubernetes token
-      debug:
-        msg:  "{{ kubernetesToken.stdout_lines | last }}"
+    - name: Change ingress deployment add replicas
+      lineinfile:
+        path: /opt/config/mandatory.yaml
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      with_items:
+        - { regexp: '  replicas: 1', line: '  replicas: 3' }
+        - { regexp: '  replicas: 1', line: '  replicas: 3' }
+      when: ingressHA == "true"
+      become: true
+
+    - name: Add nodeSelector in ingress deployment
+      lineinfile:
+        path: /opt/config/mandatory.yaml
+        insertafter: "{{ item.insertafter }}"
+        line: "{{ item.line }}"
+      with_items:
+        - {insertafter: '            memory: 20Mi', line: "      nodeSelector:\n         nodeType: ingress"}
+        - {insertafter: 'EOF', line: "      nodeSelector:\n         nodeType: ingress"}
+      become: true
+      when: ingressHA == "true"

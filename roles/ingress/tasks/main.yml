@@ -1,14 +1,65 @@
+
 - name: Apply mandatory deployment
   shell: |
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
+  when: ingressHA != "true"
+
+
+- name: Get mandatory deployment
+  get_url:
+    url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
+    dest: /opt/config/mandatory.yaml
+  when: ingressHA == "true"
+  become: true
+
+- name: Change ingress deployment add replicas
+  lineinfile:
+    path: /opt/config/mandatory.yaml
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { regexp: '  replicas: 1', line: '  replicas: 3' }
+    - { regexp: '  replicas: 1', line: '  replicas: 3' }
+  when: ingressHA == "true"
+  become: true
+
+- name: Add nodeSelector in ingress deployment
+  lineinfile:
+    path: /opt/config/mandatory.yaml
+    insertafter: "{{ item.insertafter }}"
+    line: "{{ item.line }}"
+  with_items:
+    - {insertafter: '            memory: 20Mi', line: "      nodeSelector:\n         nodeType: ingress"}
+    - {insertafter: 'EOF', line: "      nodeSelector:\n         nodeType: ingress"}
+  become: true
+  when: ingressHA == "true"
+
+
+- name: Apply ingres controler deployment
+  shell: |
+    kubectl apply -f /opt/config/mandatory.yaml
+  become: false
+  when: ingressHA == "true"
+
 
 - name: Get service-nodeport.yaml
   get_url:
     url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/baremetal/service-nodeport.yaml
     dest: /opt/config/service-nodeport.yaml
-  become: yes
+  become: true
 
-- name: Add External Ip address
+- name: Add nodeSelector in ingress deployment
+  lineinfile:
+    path: /opt/config/mandatory.yaml
+    line: "{{item}}"
+  with_items:
+   -  "      nodeSelector:"
+   -  "        nodeType: ingress"
+  become: true
+  when: ingressHA == "true"
+
+
+- name: Add ExternalIPs in ingress service without HA
   lineinfile:
     path: /opt/config/service-nodeport.yaml
     insertbefore: 'selector:'
@@ -16,10 +67,26 @@
   with_items:
     - "  externalIPs:"
     - "  - {{virtIp}}"
+  when: ingressHA != "true"
   become: true
+
+- name: Add ExternalIPs in ingress service
+  blockinfile:
+    dest: /opt/config/service-nodeport.yaml
+    insertbefore: 'selector:'
+    block: |-
+      {% for HOST_NUMBER in range(groups['ingressnodes'] | length ) %}
+        externalIPs:
+        - {{hostvars[groups['ingressnodes'][HOST_NUMBER]]['ansible_host']}}
+      {% endfor %}
+    marker: ""
+  become: true
+  when: ingressHA == "true"
+
 
 - name: Apply ingress controller service
   shell: |
     kubectl apply -f service-nodeport.yaml
   args:
     chdir: /opt/config
+  become: false

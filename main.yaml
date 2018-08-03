@@ -11,9 +11,10 @@
         state: directory
         force: yes
 
+
 # Installing Kubernetes
 - name: Installing shared packages and Kubernetes for the masters and work nodes
-  hosts: masters:worknodes
+  hosts: [masters, worknodes, ingressnodes ]
   become: yes
   become_method: sudo
 
@@ -25,7 +26,7 @@
 
 #Installing CRI - conainerd or docker
 - name: Installing CRI
-  hosts: [masters, worknodes]
+  hosts: [masters, worknodes, ingressnodes]
   become: yes
   become_method: sudo
 
@@ -49,6 +50,7 @@
       include_role:
         name: containerd
       when: criType == "containerd"
+
 
 #Install the soft that is only needed on the masters
 - name: Setting Up kubernetes masters
@@ -97,7 +99,7 @@
 
 
 - name: Init other masters
-  hosts: master2:master3
+  hosts: [ master2, master3 ]
   become: yes
   become_method: sudo
 
@@ -154,7 +156,7 @@
 
 
 - name: Add worknodes in cluster
-  hosts: worknodes
+  hosts: [ worknodes, ingressnodes ]
   become: yes
   become_method: sudo
 
@@ -163,14 +165,37 @@
       include_role:
         name: addWorkNode
 
+
+- name: Label ingress nodes
+  hosts: master1
+
+  tasks:
+    - name:  Get gather_facts in ingressnodes
+      setup:
+      delegate_to: "{{item}}"
+      delegate_facts: True
+      with_items: "{{groups.ingressnodes}}"
+
+    - name: Add label to ingress nodes
+      shell: |
+        {% for HOST_NUMBER in range(groups['ingressnodes'] | length ) %}
+          kubectl label nodes {{hostvars[groups['ingressnodes'][HOST_NUMBER]]['ansible_hostname']}} nodeType=ingress
+        {% endfor %}
+      when: ingressHA == "true"
+
+
 - name: Install ingress controller
   hosts: master1
   gather_facts: no
+
+  vars:
+    HOST_COUNT: "{{ groups['ingressnodes'] | length }}"
 
   tasks:
     - name: Install ingress controller
       include_role:
         name: ingress
+
 
 - name: Deploy Kubernetes dashboard ans heapster
   hosts: master1
@@ -212,6 +237,7 @@
       - /opt/config/kube-proxy.txt
       - /opt/config/rbac-config.yaml
       - /opt/config/helm.sh
+      - /opt/config/mandatory.yaml
       - /opt/config/service-nodeport.yaml
       when:
         - inventory_hostname == "master1"

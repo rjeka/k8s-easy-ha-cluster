@@ -33,9 +33,11 @@ vim hosts
 - в группе хостов [masters] изменить значения ansible_host на IP адреса мастеров.  
   keepalivedInterface - поменять на значение интерфейса, на котором будет работать API сервер kubernetes. На этом же       интерфейсе keepalived создаст subinterface c виртуальным IP
 - в группе хостов [worknodes]  изменить значения ansible_host на IP адреса рабочих нод
+- в группе хостов [ingressnodes] добавить имена и ip нод для ingress контроллера
 - в блоке [all:vars]:
   - virtIp - виртуальный IP адрес keepalived
   - apiLoadBalancer=true если вы хотите использовать схему с балансировкой API. (false - без балансировки)
+  - ingressHA. Если true, то ingress контроллер создается на отдельных ingress нодах (описать в группе [ingressnodes])
   - criType. containerd или docker, в зависимости какой CRI вы хотите использовать
   - если используется containerd criContainersVersion=1.1.0-rc.0 (now stable 1.1.0-rc.0). Если docker то можно ничего не менять
   - helm если хотите установить в кластер helm то true, если helm не нужен то false
@@ -46,8 +48,8 @@ vim hosts
   - K8SHA_TOKEN токен для kubeadmin. Можно сгенерировать kubeadm token generate
   - etcd_version=v3.2.17 
   - etcdToken - токен etcd любое значение например 9489bf67bdfe1b4ae067d6fd9e7efefd
-  - eepalivedPass - праоль keepalived любое значение например 6cf8dd754c90194d1600c483e10abfr
-
+  - kepalivedPass - праоль keepalived любое значение например 6cf8dd754c90194d1600c483e10abfr
+ 
 ```bash
 ansible-playbook -i hosts main.yaml
 ```
