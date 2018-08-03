@@ -38,11 +38,10 @@ vim hosts
 - в группе хостов [masters] изменить значения ansible_host на IP адреса мастеров.  
   keepalivedInterface - поменять на значение интерфейса, на котором будет работать API сервер kubernetes. На этом же       интерфейсе keepalived создаст subinterface c виртуальным IP
 - в группе хостов [worknodes]  изменить значения ansible_host на IP адреса рабочих нод
-- в группе хостов [ingressnodes] добавить имена и ip нод для ingress контроллера
+- в группе хостов [ingressnodes] добавить имена и ip нод для ingress контроллера. Если в группе нет хостов ingress контроллер устанавливается на work ноды с replicas: 1. Если ноды в списке есть то на данные ноды ставится label: ingress, устанавливается ingress контроллер и реплицируется на каждую ноду из группы.
 - в блоке [all:vars]:
   - virtIp - виртуальный IP адрес keepalived
   - apiLoadBalancer=true если вы хотите использовать схему с балансировкой API. (false - без балансировки)
-  - ingressHA. Если true, то ingress контроллер создается на отдельных ingress нодах (описать в группе [ingressnodes])
   - criType. containerd или docker, в зависимости какой CRI вы хотите использовать
   - если используется containerd criContainersVersion=1.1.0-rc.0 (now stable 1.1.0-rc.0). Если docker то можно ничего не менять
   - helm если хотите установить в кластер helm то true, если helm не нужен то false
