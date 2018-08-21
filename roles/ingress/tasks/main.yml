@@ -70,13 +70,22 @@
   when:  HOST_COUNT < 1
   become: true
 
+- name: Add ExternalIPs lines in ingress service with HA
+  lineinfile:
+    path: /opt/config/service-nodeport.yaml
+    insertbefore: 'selector:'
+    line: "{{ item }}"
+  with_items:
+    - "  externalIPs:"
+  when:  HOST_COUNT < 1
+  become: true
+
 - name: Add ExternalIPs in ingress service
   blockinfile:
     dest: /opt/config/service-nodeport.yaml
     insertbefore: 'selector:'
     block: |-
       {% for HOST_NUMBER in range(groups['ingressnodes'] | length ) %}
-        externalIPs:
         - {{hostvars[groups['ingressnodes'][HOST_NUMBER]]['ansible_host']}}
       {% endfor %}
     marker: ""
