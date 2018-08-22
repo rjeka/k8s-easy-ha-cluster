@@ -36,7 +36,7 @@ criContainersVersion=1.1.0-rc.0
 garbageCollection=false
 
 [masters:vars]
-#CIDR address space. When use calico is 192.168.0.0/16
+#CIDR address space. When use calico is 192.168.0.0/16 or 10.244.0.0/16 when use Flanel
 CIDR=192.168.0.0/16
 
 # kubernetes cluster token, you can use 'kubeadm token generate' to get a new one

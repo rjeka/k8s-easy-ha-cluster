@@ -127,4 +127,13 @@
   args:
     executable: /bin/bash
   become: false
-  when: inventory_hostname == "master1"
+  when:
+    - inventory_hostname == "master1"
+    - CIDR == "192.168.0.0/16"
+
+- name:  install Flanel CIDR
+  shell: |
+    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.10.0/Documentation/kube-flannel.yml
+  when:
+    - inventory_hostname == "master1"
+    - CIDR == "10.244.0.0/16"
