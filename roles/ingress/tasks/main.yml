@@ -83,7 +83,7 @@
 - name: Add ExternalIPs in ingress service
   blockinfile:
     dest: /opt/config/service-nodeport.yaml
-    insertbefore: 'selector:'
+    insertbefore: '  externalIPs:'
     block: |-
       {% for HOST_NUMBER in range(groups['ingressnodes'] | length ) %}
         - {{hostvars[groups['ingressnodes'][HOST_NUMBER]]['ansible_host']}}
