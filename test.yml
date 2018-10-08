@@ -8,5 +8,6 @@
 
   tasks:
     - name: Get mandatory deployment
-      include_role:
-        name: ingress
+      debug:
+        msg: "{{ HOST_COUNT }}"
+      when: HOST_COUNT > "0"

@@ -69,7 +69,7 @@
     - name: Install nginx
       include_role:
         name: nginx
-      when: apiLoadBalancer == "true"
+      when: apiLoadBalancer == "master"
 
 
 #Init First master
@@ -152,7 +152,7 @@
 
   tasks:
   - include_tasks: tasks/сhangeAPI.yml
-    when: apiLoadBalancer == "true"
+    when: apiLoadBalancer == "master"
 
 
 - name: Add worknodes in cluster
@@ -184,7 +184,7 @@
         {% for HOST_NUMBER in range(groups['ingressnodes'] | length ) %}
           kubectl label nodes {{hostvars[groups['ingressnodes'][HOST_NUMBER]]['ansible_hostname']}} nodeType=ingress
         {% endfor %}
-      when:  HOST_COUNT > 0
+      when:  HOST_COUNT > "0"
 
 
 - name: Install ingress controller

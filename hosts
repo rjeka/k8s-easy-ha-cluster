@@ -1,21 +1,22 @@
 
 [masters]
-master1 ansible_host=10.73.69.12 keepalivedInterface=enp0s8
-master2 ansible_host=10.73.69.13 keepalivedInterface=enp0s8
-master3 ansible_host=10.73.69.14 keepalivedInterface=enp0s8
+master1 ansible_host=10.73.69.148 keepalivedInterface=ens19
+master2 ansible_host=10.73.68.147 keepalivedInterface=ens19
+master3 ansible_host=10.73.69.12  keepalivedInterface=ens19
 
 [worknodes]
-node1 ansible_host=10.73.69.15
+node1 ansible_host=10.73.70.142
 
 [ingressnodes]
-ingres1 ansible_host=10.73.69.16
+
 
 [all:vars]
 #Keepalived virtual IP
-virtIp=10.73.69.11
+virtIp=10.73.70.138
 
-#Api Load balancer in masters
-apiLoadBalancer=true
+#Api Load balancer on master or on work nodes
+apiLoadBalancer=master
+
 
 #Ingress HA on individual nodes
 #ingressHA=true
@@ -27,7 +28,7 @@ helm=true
 DynamicKubeletConfig=true
 
 #Conainer runner type. Containerd or docker
-criType=containerd
+criType=docker
 
 #If you are using containerd, enter the version (now stable 1.1.0-rc.0)
 criContainersVersion=1.1.0-rc.0
@@ -43,7 +44,7 @@ CIDR=192.168.0.0/16
 K8SHA_TOKEN=i2sbjw.is6l5m5a53y6v9nu
 
 #Etcd version for kubernetes and kubeadm 1.11 etcd must be 3.2.17
-etcd_version=v3.2.17
+etcd_version=v3.2.24
 
 
 #Etcd cluster token

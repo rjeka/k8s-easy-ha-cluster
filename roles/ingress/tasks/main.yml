@@ -2,14 +2,14 @@
 - name: Apply mandatory deployment
   shell: |
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
-  when:  HOST_COUNT < 1
+  when:  HOST_COUNT < "1"
 
 
 - name: Get mandatory deployment
   get_url:
     url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
     dest: /opt/config/mandatory.yaml
-  when: HOST_COUNT > 0
+  when: HOST_COUNT > "0"
   become: true
 
 - name: Change ingress deployment add replicas
@@ -20,7 +20,7 @@
   with_items:
     - { regexp: '  replicas: 1', line: '  replicas:  {{HOST_COUNT}}' }
     - { regexp: '  replicas: 1', line: '  replicas: {{HOST_COUNT}}' }
-  when:  HOST_COUNT > 0
+  when:  HOST_COUNT > "0"
   become: true
 
 - name: Add nodeSelector in ingress deployment
@@ -32,14 +32,14 @@
     - {insertafter: '            memory: 20Mi', line: "      nodeSelector:\n         nodeType: ingress"}
     - {insertafter: 'EOF', line: "      nodeSelector:\n         nodeType: ingress"}
   become: true
-  when:  HOST_COUNT > 0
+  when:  HOST_COUNT > "0"
 
 
 - name: Apply ingres controler deployment
   shell: |
     kubectl apply -f /opt/config/mandatory.yaml
   become: false
-  when:  HOST_COUNT > 0
+  when:  HOST_COUNT > "0"
 
 
 - name: Get service-nodeport.yaml
@@ -56,7 +56,7 @@
    -  "      nodeSelector:"
    -  "        nodeType: ingress"
   become: true
-  when:  HOST_COUNT > 0
+  when:  HOST_COUNT > "0"
 
 
 - name: Add ExternalIPs in ingress service without HA
@@ -67,7 +67,7 @@
   with_items:
     - "  externalIPs:"
     - "  - {{virtIp}}"
-  when:  HOST_COUNT < 1
+  when:  HOST_COUNT < "1"
   become: true
 
 - name: Add ExternalIPs lines in ingress service with HA
@@ -77,7 +77,7 @@
     line: "{{ item }}"
   with_items:
     - "  externalIPs:"
-  when:  HOST_COUNT > 1
+  when:  HOST_COUNT > "1"
   become: true
 
 - name: Add ExternalIPs in ingress service
@@ -90,7 +90,7 @@
       {% endfor %}
     marker: ""
   become: true
-  when:  HOST_COUNT > 0
+  when:  HOST_COUNT > "0"
 
 
 - name: Apply ingress controller service
