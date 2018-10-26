@@ -32,7 +32,7 @@
 
 - name: Create master node with Containerd
   shell: |
-    kubeadm init --config=kubeadm-init.yaml --skip-preflight-checks
+    kubeadm init --config=kubeadm-init.yaml
   args:
     chdir: /opt/config/kubeadm/
   when: criType == "containerd"

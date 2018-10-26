@@ -1,10 +1,15 @@
-apiVersion: kubeadm.k8s.io/v1alpha1
-kind: MasterConfiguration
-api:
-  advertiseAddress: {{virtIp}}
-  controlPlaneEndpoint: {{virtIp}}
-networking:
-  podSubnet: {{CIDR}}
+{% if criType == "containerd" %}
+apiVersion: kubeadm.k8s.io/v1alpha3
+kind: InitConfiguration
+nodeRegistration:
+  criSocket: /run/containerd/containerd.sock
+
+---
+{% endif %}
+
+apiVersion: kubeadm.k8s.io/v1alpha3
+kind: ClusterConfiguration
+kubernetesVersion: stable
 apiServerCertSANs:
 - {{ hostvars[groups['masters'][0]]['ansible_hostname'] }}
 - {{ hostvars[groups['masters'][1]]['ansible_hostname'] }}
@@ -14,16 +19,14 @@ apiServerCertSANs:
 - {{ hostvars[groups['masters'][2]]['ansible_host'] }}
 - {{virtIp}}
 - 127.0.0.1
+controlPlaneEndpoint: {{virtIp}}
 etcd:
-  endpoints:
-  - http://{{ hostvars[groups['masters'][0]]['ansible_host'] }}:2379
-  - http://{{ hostvars[groups['masters'][1]]['ansible_host'] }}:2379
-  - http://{{ hostvars[groups['masters'][2]]['ansible_host'] }}:2379
+  external:
+    endpoints:
+    - http://{{ hostvars[groups['masters'][0]]['ansible_host'] }}:2379
+    - http://{{ hostvars[groups['masters'][1]]['ansible_host'] }}:2379
+    - http://{{ hostvars[groups['masters'][2]]['ansible_host'] }}:2379
+networking:
+  podSubnet: {{CIDR}}
 apiServerExtraArgs:
   apiserver-count: "3"
-{% if DynamicKubeletConfig == "true" %}
-feature-gates:
-  DynamicKubeletConfig: true
-{% endif %}
-token: {{K8SHA_TOKEN}}
-tokenTTL: "0"

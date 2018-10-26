@@ -160,10 +160,14 @@
   become: yes
   become_method: sudo
 
+  vars:
+    HOST_COUNT: "{{ groups['worknodes'] | length }}"
+
   tasks:
     - name: add node to Cluster
       include_role:
         name: addWorkNode
+      when:  HOST_COUNT > "0"
 
 
 - name: Label ingress nodes
