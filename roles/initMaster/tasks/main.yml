@@ -2,16 +2,26 @@
   systemd:
     name: keepalived
     state: restarted
+  when: vrrp == "true"
 
 - name: Create kubeadm config directory
   file:
     path: /opt/config/kubeadm
     state: directory
 
-- name: Config kubeadm-init.yaml
+- name: Config kubeadm-init.yaml whis keepalived
   template:
     src: kubeadm-init.yaml.tmpl
     dest: /opt/config/kubeadm/kubeadm-init.yaml
+  when: vrrp == "true"
+
+
+- name: Configure kubeadm-init-haproxy.yaml without keepalived
+  template:
+    src: kubeadm-init-haproxy.yaml.tmpl
+    dest: /opt/config/kubeadm/kubeadm-init.yaml
+  when: vrrp == "false"
+
 
 - name: Add containerd criSocket to kubeadm-init.yaml
   lineinfile:

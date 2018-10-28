@@ -2,9 +2,10 @@
 [masters]
 master1 ansible_host=23.105.244.92 keepalivedInterface=agge
 master2 ansible_host=23.105.243.20 keepalivedInterface=agge
-master3 ansible_host=88.212.242.4 keepalivedInterface=agge
+master3 ansible_host=88.212.242.4  keepalivedInterface=agge
 
 [worknodes]
+
 
 [ingressnodes]
 
@@ -13,12 +14,11 @@ master3 ansible_host=88.212.242.4 keepalivedInterface=agge
 #Keepalived virtual IP
 virtIp=23.105.241.66
 
+vrrp=true
+
 #Api Load balancer on master or on work nodes
 apiLoadBalancer=nodes
 
-
-#Ingress HA on individual nodes
-#ingressHA=true
 
 #Install Helm
 helm=true
@@ -27,10 +27,10 @@ helm=true
 DynamicKubeletConfig=true
 
 #Conainer runner type. Containerd or docker
-criType=containerd
+criType=docker
 
 #If you are using containerd, enter the version (now stable 1.1.0-rc.0)
-criContainersVersion=1.1.0-rc.0
+criContainersVersion=1.2.0-rc.0
 
 #If you want to delete the config files, the CRI and ETCD archives are then true
 garbageCollection=true

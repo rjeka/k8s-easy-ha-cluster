@@ -23,6 +23,7 @@
       shell: |
         kubeadm reset --force
       become: true
+      ignore_errors: true
 
     - name: Del all pods (containerd)
       shell: |
@@ -30,6 +31,7 @@
         crictl rm $(crictl ps -a -q)
       when: criType == "containerd"
       become: true
+      ignore_errors: true
 
     - name: Purge nginx
       apt:
@@ -39,12 +41,14 @@
       when:
         - inventory_hostname in groups['masters']
         - apiLoadBalancer == "true"
+      ignore_errors: true
 
     - name: stop etcd
       systemd:
         name: etcd
         state: stopped
       when: inventory_hostname in groups['masters']
+      ignore_errors: true
 
     - name: stop CRI containerd
       systemd:
@@ -53,6 +57,7 @@
       when:
         - inventory_hostname in groups['masters']
         -  criType == "containerd"
+      ignore_errors: true
 
     - name: erase etcd database
       file:

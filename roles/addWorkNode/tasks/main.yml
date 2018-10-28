@@ -21,7 +21,7 @@
 
 - name: change kubeadmin init string
   shell: |
-    sed -i 's/$/ --cri-socket \/run\/containerd\/containerd.sock --skip-preflight-checks/' token.txt
+    sed -i 's/$/ --cri-socket \/run\/containerd\/containerd.sock/' token.txt
   args:
     chdir: /opt/config/
   when: criType == "containerd"

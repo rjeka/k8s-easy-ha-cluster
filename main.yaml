@@ -29,6 +29,7 @@
   hosts: [masters, worknodes, ingressnodes]
   become: yes
   become_method: sudo
+  tags: containerd
 
   tasks:
     - name: enable ip_forward
@@ -36,10 +37,16 @@
         name: net.ipv4.ip_forward
         value: 1
 
-    - name: Entry DNS name node in /etc/hosts
-      lineinfile:
-        path: /etc/hosts
-        line: '{{ansible_host}} {{ansible_hostname}}'
+    #ame: Entry DNS name node in /etc/hosts
+    #  lineinfile:
+    #    path: /etc/hosts
+    #    line: "{{ item }}"
+    #  with_items:
+    #  - "{{ hostvars[groups['masters'][0]]['ansible_host'] }} {{ hostvars[groups['masters'][0]]['ansible_hostname'] }}"
+    #  - "{{ hostvars[groups['masters'][1]]['ansible_host'] }} {{ hostvars[groups['masters'][1]]['ansible_hostname'] }}"
+    #  - "{{ hostvars[groups['masters'][2]]['ansible_host'] }} {{ hostvars[groups['masters'][2]]['ansible_hostname'] }}"
+
+
 
     - name: Install docker
       include_role:
@@ -52,6 +59,7 @@
       when: criType == "containerd"
 
 
+
 #Install the soft that is only needed on the masters
 - name: Setting Up kubernetes masters
   hosts: masters
@@ -59,12 +67,19 @@
   become_method: sudo
 
   tasks:
-    - name: Install etcd and keepalived
+    - name: Install etcd
       include_role:
         name: "{{ item }}"
       with_items:
       - etcd
+
+    - name: Install etcd
+      include_role:
+        name: "{{ item }}"
+      with_items:
       - keepalived
+      when: keepalived == "true"
+
 
     - name: Install nginx
       include_role:
@@ -131,21 +146,33 @@
       include_role:
         name: initMaster
 
-- name: Scale DNS to 2nd and 3rd master
+#- name: Scale DNS to 2nd and 3rd master
+#  hosts: master1
+#  gather_facts: no
+
+#  tasks:
+#    - name: Pause while callico starts
+#      pause:
+#        prompt: "Wait starting CIDR and Kubernetes coredns"
+#        seconds: 15
+
+#    - name: Scale DNS
+#      shell: |
+#        kubectl scale --replicas=4 -n kube-system deployment/coredns
+#      become: false
+
+- name: master as the worknodes
   hosts: master1
-  gather_facts: no
+
+  vars:
+    HOST_COUNT: "{{ groups['worknodes'] | length }}"
+
 
   tasks:
-    - name: Pause while callico starts
-      pause:
-        prompt: "Wait starting CIDR and Kubernetes coredns"
-        seconds: 15
-
-    - name: Scale DNS
+    - name: tain nodes
       shell: |
-        kubectl scale --replicas=4 -n kube-system deployment/coredns
-      become: false
-
+        kubectl taint nodes --all node-role.kubernetes.io/master-
+      when: HOST_COUNT < "1"
 
 - name: Change API IP address
   hosts: master1
