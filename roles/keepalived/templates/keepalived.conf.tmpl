@@ -1,6 +1,7 @@
 ! Configuration File for keepalived
 global_defs {
     router_id LVS_DEVEL
+    enable_script_security
 }
 vrrp_script chk_apiserver {
     script "/etc/keepalived/check_apiserver.sh"

@@ -30,3 +30,7 @@ networking:
   podSubnet: {{CIDR}}
 apiServerExtraArgs:
   apiserver-count: "3"
+{% if coreDns == "false" %}
+featureGates:
+  CoreDNS: false
+{% endif %}

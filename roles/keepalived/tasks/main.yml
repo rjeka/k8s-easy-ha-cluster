@@ -1,7 +1,10 @@
 - name: Installing keepalived
   apt:
-   name: keepalived
+   name: "{{ item }}"
    update_cache: true
+  with_items:
+  - keepalived
+  - libipset3
 
 
 - name: Check that the /keepalived.conf exists

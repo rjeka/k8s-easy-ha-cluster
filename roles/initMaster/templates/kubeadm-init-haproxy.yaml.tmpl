@@ -1,8 +1,8 @@
 {% if criType == "containerd" %}
-apiVersion: kubeadm.k8s.io/v1alpha3
-kind: InitConfiguration
-nodeRegistration:
-  criSocket: /run/containerd/containerd.sock
+  apiVersion: kubeadm.k8s.io/v1alpha3
+  kind: InitConfiguration
+  nodeRegistration:
+    criSocket: /run/containerd/containerd.sock
 
 ---
 {% endif %}
@@ -30,3 +30,7 @@ networking:
   podSubnet: {{CIDR}}
 apiServerExtraArgs:
   apiserver-count: "3"
+{% if coreDns == "false" %}
+featureGates:
+  CoreDNS: false
+{% endif %}

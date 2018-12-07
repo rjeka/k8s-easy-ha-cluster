@@ -42,7 +42,7 @@
 
 - name: Create master node with Containerd
   shell: |
-    kubeadm init --config=kubeadm-init.yaml
+    kubeadm init --config=kubeadm-init.yaml --ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
   args:
     chdir: /opt/config/kubeadm/
   when: criType == "containerd"
