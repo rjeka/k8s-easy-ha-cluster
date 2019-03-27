@@ -60,7 +60,3 @@
     - name: Install new kernel
       shell: |
         apt-get -t stretch-backports install -y linux-image-4.19.0-0.bpo.2-amd64 linux-headers-4.19.0-0.bpo.2-amd64
-
-    - name: rebooting the machine
-      reboot:
-        msg: Rebooting for usage new kernel

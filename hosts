@@ -31,6 +31,8 @@ helm=true
 #Dynamic config Api Server (true or false)
 DynamicKubeletConfig=true
 
+criType=containerd
+
 #If you are using containerd, enter the version (now stable 1.1.0-rc.0)
 criContainersVersion=1.2.5
 

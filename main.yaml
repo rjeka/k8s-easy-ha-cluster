@@ -24,7 +24,6 @@
         name: "{{ item }}"
       with_items:
       - kubelet
-      - containerd
 
 
 #Installing CRI - conainerd or docker
@@ -32,7 +31,6 @@
   hosts: [masters, worknodes, ingressnodes]
   become: yes
   become_method: sudo
-  tags: containerd
 
   tasks:
     - name: enable ip_forward
