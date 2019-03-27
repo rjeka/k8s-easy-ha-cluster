@@ -29,9 +29,9 @@
     name: "{{ item }}"
     update_cache: yes
   with_items:
-  - kubelet
-  - kubeadm
-  - kubectl
+  - kubelet={{ kubeVersion }}
+  - kubeadm={{ kubeVersion }}
+  - kubectl={{ kubeVersion }}
   - unzip
   - tar
   - btrfs-tools
@@ -39,6 +39,9 @@
   - socat
   - util-linux
   - curl
+  - nfs-common
+  - portmap
+  - ceph-common
 
 
 - name: Enable & start kubelet

@@ -1,0 +1,48 @@
+- name: Copy kubeadm  token to ansiblehost
+  hosts: master1
+  become: True
+  become_method: sudo
+
+  tasks:
+    - name: Copy init token to ansible host
+      fetch:
+        src: /opt/config/token.txt
+        dest: /tmp/k8s/
+
+- name: Installing shared packages and Kubernetes for the masters and work nodes
+  hosts: worknodes
+  become: yes
+  become_method: sudo
+
+  tasks:
+    - name: Install kubernetes
+      include_role:
+        name: kubelet
+
+    - name: enable br_netfilter
+      modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: enable ip_forward
+      sysctl:
+        name: "{{ item }}"
+        value: 1
+      with_items:
+        - net.ipv4.ip_forward
+        - net.bridge.bridge-nf-call-iptables
+
+    - name: Install CRI
+      include_role:
+        name: docker
+
+
+
+    - name: copy certificate
+      copy:
+        src:  /tmp/k8s/master1/opt/config/token.txt/
+        dest: /opt/token.txt
+
+    #- name: Add worknode
+    #  include_role:
+    #    name: addWorkNode

@@ -6,10 +6,17 @@
   - apt-transport-https
   - ca-certificates
   - software-properties-common
+  - curl
+  - gnupg2
 
 - name: Add docker gpg key
   apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+
+- name: Remove a Apt specific signing key, leading 0x is valid
+  apt_key:
+    id: 0EBFCD88
     state: present
 
 - name:  Get docker repositorie
@@ -27,11 +34,11 @@
   apt:
     update_cache: yes
 
-- name: Get docker package version
-  shell: |
-    echo $(apt-cache madison docker-ce | grep 17.03 | head -1 | awk '{print $3}')
-  register: dockerPackage
 
 - name: Installing docker
   apt:
-    name: "docker-ce={{dockerPackage.stdout}}"
+    name: "{{ item }}"
+  with_items:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io

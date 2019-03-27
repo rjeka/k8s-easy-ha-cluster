@@ -10,7 +10,7 @@
 
 
 - name: reset kubernetes and etcd cluster
-  hosts: [masters, worknodes, ingressnodes]
+  hosts: all
   become: yes
   become_method: sudo
   gather_facts: no
@@ -97,7 +97,6 @@
       - /usr/local/bin/ctr
       when:
         - criType == "containerd"
-        - inventory_hostname in groups['masters']
         - garbageCollection == "true"
 
     - name: Delete old ingress config-file
@@ -119,3 +118,14 @@
       when:
         - inventory_hostname in groups['masters'] or inventory_hostname in groups['worknodes']
         - criType == "docker"
+
+    - name: Purge kubeadm, kubelet, kubectl, and shared packages
+      apt:
+        name: "{{ item }}"
+        state: absent
+        purge: yes
+        force: yes
+      with_items:
+      - kubelet
+      - kubeadm
+      - kubectl

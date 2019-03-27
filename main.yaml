@@ -21,7 +21,10 @@
   tasks:
     - name: Install kubernetes
       include_role:
-        name: kubelet
+        name: "{{ item }}"
+      with_items:
+      - kubelet
+      - containerd
 
 
 #Installing CRI - conainerd or docker
