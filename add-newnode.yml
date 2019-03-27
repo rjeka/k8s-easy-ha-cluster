@@ -17,7 +17,10 @@
   tasks:
     - name: Install kubernetes
       include_role:
-        name: kubelet
+        name: "{{ item }}"
+      with_items:
+      - kubelet
+      - containerd
 
     - name: enable br_netfilter
       modprobe:
@@ -37,12 +40,27 @@
         name: docker
 
 
-
     - name: copy certificate
       copy:
         src:  /tmp/k8s/master1/opt/config/token.txt/
         dest: /opt/token.txt
 
-    #- name: Add worknode
-    #  include_role:
-    #    name: addWorkNode
+    - name: Kubeadm init worknode
+      shell: |
+        cat token.txt | bash
+      args:
+        chdir: /opt
+
+    - name: Add backports repo for new kernel
+      apt_repository:
+        repo: deb http://ftp.debian.org/debian stretch-backports main
+        state: present
+        update_cache: yes
+
+    - name: Install new kernel
+      shell: |
+        apt-get -t stretch-backports install -y linux-image-4.19.0-0.bpo.2-amd64 linux-headers-4.19.0-0.bpo.2-amd64
+
+    - name: rebooting the machine
+      reboot:
+        msg: Rebooting for usage new kernel

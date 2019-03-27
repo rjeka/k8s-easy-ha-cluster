@@ -22,38 +22,16 @@
     dest: /opt/config/kubeadm/kubeadm-init.yaml
   when: vrrp == "false"
 
-
-- name: Add containerd criSocket to kubeadm-init.yaml
-  lineinfile:
-    path: /opt/config/kubeadm/kubeadm-init.yaml
-    line: 'criSocket: /run/containerd/containerd.sock'
-  when: criType == "containerd"
-
 - name: pull images of k8s with the docker
   shell: |
     kubeadm config images pull
-  when: criType == "docker"
-
-- name: pull images of k8s with the crictl
-  shell: |
-    kubeadm config images pull --cri-socket-path /run/containerd/containerd.sock
-  when: criType == "containerd"
 
 
-- name: Create master node with Containerd
-  shell: |
-    kubeadm init --config=kubeadm-init.yaml --ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
-  args:
-    chdir: /opt/config/kubeadm/
-  when: criType == "containerd"
-  register: kubernetesTokenCrictl
-
-- name: Create master node with Docker
+- name: Create master node
   shell: |
     kubeadm init --config=kubeadm-init.yaml
   args:
     chdir: /opt/config/kubeadm/
-  when: criType == "docker"
   register: kubernetesTokenDocker
 
 - name: Reset kubernetes token file
@@ -70,14 +48,7 @@
 - name: Print kubernetes token
   lineinfile:
     path: /opt/config/token.txt
-    line: "{{ kubernetesTokenCrictl.stdout_lines | last }}"
-  when: criType == "containerd"
-
-- name: Print kubernetes token
-  lineinfile:
-    path: /opt/config/token.txt
     line: "{{ kubernetesTokenDocker.stdout_lines | last }}"
-  when: criType == "docker"
 
 
 - name: Copy init token to ansible host

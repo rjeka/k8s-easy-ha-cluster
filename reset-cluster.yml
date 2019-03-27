@@ -29,7 +29,6 @@
       shell: |
         crictl stop $(crictl ps -a -q) && \
         crictl rm $(crictl ps -a -q)
-      when: criType == "containerd"
       become: true
       ignore_errors: true
 
@@ -56,7 +55,6 @@
         state: stopped
       when:
         - inventory_hostname in groups['masters']
-        -  criType == "containerd"
       ignore_errors: true
 
     - name: erase etcd database
@@ -96,7 +94,6 @@
       - /usr/local/bin/critest
       - /usr/local/bin/ctr
       when:
-        - criType == "containerd"
         - garbageCollection == "true"
 
     - name: Delete old ingress config-file
@@ -117,7 +114,6 @@
         purge: true
       when:
         - inventory_hostname in groups['masters'] or inventory_hostname in groups['worknodes']
-        - criType == "docker"
 
     - name: Purge kubeadm, kubelet, kubectl, and shared packages
       apt:

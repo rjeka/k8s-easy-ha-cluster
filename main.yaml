@@ -40,16 +40,6 @@
         name: net.ipv4.ip_forward
         value: 1
 
-    #ame: Entry DNS name node in /etc/hosts
-    #  lineinfile:
-    #    path: /etc/hosts
-    #    line: "{{ item }}"
-    #  with_items:
-    #  - "{{ hostvars[groups['masters'][0]]['ansible_host'] }} {{ hostvars[groups['masters'][0]]['ansible_hostname'] }}"
-    #  - "{{ hostvars[groups['masters'][1]]['ansible_host'] }} {{ hostvars[groups['masters'][1]]['ansible_hostname'] }}"
-    #  - "{{ hostvars[groups['masters'][2]]['ansible_host'] }} {{ hostvars[groups['masters'][2]]['ansible_hostname'] }}"
-
-
 
     - name: Install docker
       include_role:

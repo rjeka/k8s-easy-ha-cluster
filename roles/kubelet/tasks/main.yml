@@ -42,7 +42,7 @@
   - nfs-common
   - portmap
   - ceph-common
-
+  - python-apt
 
 - name: Enable & start kubelet
   systemd:
