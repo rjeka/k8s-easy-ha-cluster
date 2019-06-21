@@ -1,13 +1,8 @@
 - name: Preinstall packages
   apt:
-    name: "{{ item }}"
+    name: ['apt-transport-https', 'ca-certificates', 'software-properties-common', 'curl', 'gnupg2']
     update_cache: yes
-  with_items:
-  - apt-transport-https
-  - ca-certificates
-  - software-properties-common
-  - curl
-  - gnupg2
+    
 
 - name: Add docker gpg key
   apt_key:
@@ -37,8 +32,4 @@
 
 - name: Installing docker
   apt:
-    name: "{{ item }}"
-  with_items:
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
+    name: ['docker-ce', 'docker-ce-cli', 'containerd.io']

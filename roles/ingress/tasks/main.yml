@@ -1,13 +1,13 @@
 
 - name: Apply mandatory deployment
   shell: |
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
+    kubectl apply -f kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
   when:  HOST_COUNT < "1"
 
 
 - name: Get mandatory deployment
   get_url:
-    url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
+    url: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
     dest: /opt/config/mandatory.yaml
   when: HOST_COUNT > "0"
   become: true

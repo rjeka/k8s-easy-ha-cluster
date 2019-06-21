@@ -26,23 +26,9 @@
 
 - name: Installing kubeadm, kubelet, kubectl, and shared packages
   apt:
-    name: "{{ item }}"
+    name: ['kubelet', 'kubeadm', 'kubectl', 'unzip', 'tar', 'btrfs-tools', 'libseccomp2', 'socat', 'util-linux', 'curl', 'nfs-common', 'portmap', 'ceph-common', 'python-apt']
     update_cache: yes
-  with_items:
-  - kubelet #={{ kubeVersion }}
-  - kubeadm #={{ kubeVersion }}
-  - kubectl #={{ kubeVersion }}
-  - unzip
-  - tar
-  - btrfs-tools
-  - libseccomp2
-  - socat
-  - util-linux
-  - curl
-  - nfs-common
-  - portmap
-  - ceph-common
-  - python-apt
+
 
 - name: Enable & start kubelet
   systemd:

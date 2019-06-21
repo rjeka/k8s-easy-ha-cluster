@@ -37,7 +37,7 @@ criType=docker
 criContainersVersion=1.2.5
 
 #If you want to delete the config files, the CRI and ETCD archives are then true
-garbageCollection=true
+garbageCollection=false
 
 [masters:vars]
 #CIDR address space. When use calico is 192.168.0.0/16 or 10.244.0.0/16 when use Flanel
@@ -47,7 +47,7 @@ CIDR=192.168.0.0/16
 K8SHA_TOKEN=i2sbjw.is6l5m5a53y6v9nu
 
 #Etcd version for kubernetes and kubeadm 1.11 etcd must be 3.2.17
-etcd_version=v3.3.10
+etcd_version=v3.3.13
 
 
 #Etcd cluster token
