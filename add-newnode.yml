@@ -20,7 +20,6 @@
         name: "{{ item }}"
       with_items:
       - kubelet
-      - containerd
 
     - name: enable br_netfilter
       modprobe:

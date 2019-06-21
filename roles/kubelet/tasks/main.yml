@@ -29,9 +29,9 @@
     name: "{{ item }}"
     update_cache: yes
   with_items:
-  - kubelet={{ kubeVersion }}
-  - kubeadm={{ kubeVersion }}
-  - kubectl={{ kubeVersion }}
+  - kubelet #={{ kubeVersion }}
+  - kubeadm #={{ kubeVersion }}
+  - kubectl #={{ kubeVersion }}
   - unzip
   - tar
   - btrfs-tools

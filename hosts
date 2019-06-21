@@ -1,12 +1,12 @@
 [masters]
-master1 ansible_host=10.73.70.188 keepalivedInterface=aggi
-master2 ansible_host=10.73.71.124 keepalivedInterface=aggi
-master3 ansible_host=10.73.69.236 keepalivedInterface=aggi
+master1 ansible_host=10.73.69.22 keepalivedInterface=aggi
+master2 ansible_host=10.73.69.24 keepalivedInterface=aggi
+master3 ansible_host=10.73.69.25 keepalivedInterface=aggi
 
 [worknodes]
-node01 ansible_host=10.73.68.228
-node02 ansible_host=10.73.69.220
-node03 ansible_host=10.73.78.20
+#node01 ansible_host=10.73.68.228
+#node02 ansible_host=10.73.69.220
+#node03 ansible_host=10.73.78.20
 
 
 [ingressnodes]
@@ -20,7 +20,7 @@ vrrp=false
 
 coreDns=true
 
-kubeVersion=1.13.5-00
+kubeVersion=1.15.1-00
 
 #Api Load balancer on master or on work nodes
 apiLoadBalancer=nodes
@@ -31,7 +31,7 @@ helm=true
 #Dynamic config Api Server (true or false)
 DynamicKubeletConfig=true
 
-criType=containerd
+criType=docker
 
 #If you are using containerd, enter the version (now stable 1.1.0-rc.0)
 criContainersVersion=1.2.5

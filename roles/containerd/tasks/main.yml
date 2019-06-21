@@ -24,10 +24,10 @@
     src: config.toml.tmpl
     dest: "/etc/containerd/config.toml"
 
-- name: config kubelet service for containerd
-  template:
-    src: 0-cri-containerd.conf.tmpl
-    dest: /etc/systemd/system/kubelet.service.d/0-cri-containerd.conf
+#- name: config kubelet service for containerd
+#  template:
+#    src: 0-cri-containerd.conf.tmpl
+#    dest: /etc/systemd/system/kubelet.service.d/0-cri-containerd.conf
 
 - name: Enable & start containerd
   systemd:

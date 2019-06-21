@@ -89,23 +89,15 @@
       - /usr/local/bin/containerd
       - /usr/local/bin/containerd-release
       - /usr/local/bin/containerd-shim
+      - /usr/local/bin/containerd-shim-runc-v1
       - /usr/local/bin/containerd-stress
       - /usr/local/bin/crictl
       - /usr/local/bin/critest
       - /usr/local/bin/ctr
+      - /usr/local/sbin/runc
       when:
         - garbageCollection == "true"
 
-    - name: Delete old ingress config-file
-      file:
-        path: "{{ item }}"
-        state: absent
-      with_items:
-        - /opt/config/service-nodeport.yaml
-        - /opt/config/mandatory.yaml
-      when:
-        - HOST_COUNT > 0
-        - inventory_hostname == "master1"
 
     - name: Purge docker
       apt:
@@ -125,3 +117,6 @@
       - kubelet
       - kubeadm
       - kubectl
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
