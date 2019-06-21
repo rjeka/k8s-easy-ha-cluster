@@ -8,4 +8,4 @@
   tasks:
     - name: Install ingress controller
       include_role:
-        name: ingress
+        name: dashboard

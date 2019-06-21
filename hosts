@@ -24,10 +24,11 @@ coreDns=true
 
 #ingress
 inggressOnVrrp=false
-ingressQuantity=3
 
+#masters as worknode
 tainNodes=false
 
+#kubernetes version
 kubeVersion=1.15.1-00
 
 #Api Load balancer on master or on work nodes
