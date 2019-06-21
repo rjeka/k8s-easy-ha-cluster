@@ -155,15 +155,12 @@
 - name: master as the worknodes
   hosts: master1
 
-  vars:
-    HOST_COUNT: "{{ groups['worknodes'] | length }}"
-
 
   tasks:
     - name: tain nodes
       shell: |
         kubectl taint nodes --all node-role.kubernetes.io/master-
-      when: HOST_COUNT < "1"
+      when: tainNodes ==  "true"
 
 - name: Change API IP address
   hosts: master1

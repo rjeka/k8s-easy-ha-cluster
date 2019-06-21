@@ -1,26 +1,30 @@
 
-- name: Apply mandatory deployment
-  shell: |
-    kubectl apply -f kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
-  when:  HOST_COUNT < "1"
-
-
 - name: Get mandatory deployment
   get_url:
-    url: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
+    url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
     dest: /opt/config/mandatory.yaml
-  when: HOST_COUNT > "0"
   become: true
 
-- name: Change ingress deployment add replicas
+- name:  change ingress replicas quantity if ingressnodes available
   lineinfile:
     path: /opt/config/mandatory.yaml
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
   with_items:
     - { regexp: '  replicas: 1', line: '  replicas:  {{HOST_COUNT}}' }
-    - { regexp: '  replicas: 1', line: '  replicas: {{HOST_COUNT}}' }
   when:  HOST_COUNT > "0"
+  become: true
+
+
+
+- name:  change ingress replicas quantity if ingressnodes not available
+  lineinfile:
+    path: /opt/config/mandatory.yaml
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { regexp: '  replicas: 1', line: '  replicas: 3' }
+  when:  HOST_COUNT < "1"
   become: true
 
 - name: Add nodeSelector in ingress deployment
@@ -39,58 +43,14 @@
   shell: |
     kubectl apply -f /opt/config/mandatory.yaml
   become: false
-  when:  HOST_COUNT > "0"
 
 
-- name: Get service-nodeport.yaml
-  get_url:
-    url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/baremetal/service-nodeport.yaml
+- name: copy service-nodeport
+  template:
+    src: service-nodeport.j2
     dest: /opt/config/service-nodeport.yaml
   become: true
-
-- name: Add nodeSelector in ingress deployment
-  lineinfile:
-    path: /opt/config/mandatory.yaml
-    line: "{{item}}"
-  with_items:
-   -  "      nodeSelector:"
-   -  "        nodeType: ingress"
-  become: true
-  when:  HOST_COUNT > "0"
-
-
-- name: Add ExternalIPs in ingress service without HA
-  lineinfile:
-    path: /opt/config/service-nodeport.yaml
-    insertbefore: 'selector:'
-    line: "{{ item }}"
-  with_items:
-    - "  externalIPs:"
-    - "  - {{virtIp}}"
-  when:  HOST_COUNT < "1"
-  become: true
-
-- name: Add ExternalIPs lines in ingress service with HA
-  lineinfile:
-    path: /opt/config/service-nodeport.yaml
-    insertbefore: 'selector:'
-    line: "{{ item }}"
-  with_items:
-    - "  externalIPs:"
-  when:  HOST_COUNT > "1"
-  become: true
-
-- name: Add ExternalIPs in ingress service
-  blockinfile:
-    dest: /opt/config/service-nodeport.yaml
-    insertbefore: '  externalIPs:'
-    block: |-
-      {% for HOST_NUMBER in range(groups['ingressnodes'] | length ) %}
-        - {{hostvars[groups['ingressnodes'][HOST_NUMBER]]['ansible_host']}}
-      {% endfor %}
-    marker: ""
-  become: true
-  when:  HOST_COUNT > "0"
+  tags: test
 
 
 - name: Apply ingress controller service

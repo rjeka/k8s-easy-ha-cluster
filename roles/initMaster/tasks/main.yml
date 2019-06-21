@@ -22,9 +22,9 @@
     dest: /opt/config/kubeadm/kubeadm-init.yaml
   when: vrrp == "false"
 
-- name: pull images of k8s with the docker
-  shell: |
-    kubeadm config images pull
+#- name: pull images of k8s with the docker
+#  shell: |
+#    kubeadm config images pull
 
 
 - name: Create master node

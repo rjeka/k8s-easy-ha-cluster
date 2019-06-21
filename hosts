@@ -1,3 +1,6 @@
+[local]
+localhost ansible_connection=local
+
 [masters]
 master1 ansible_host=10.73.69.22 keepalivedInterface=aggi
 master2 ansible_host=10.73.69.24 keepalivedInterface=aggi
@@ -11,14 +14,19 @@ master3 ansible_host=10.73.69.25 keepalivedInterface=aggi
 
 [ingressnodes]
 
-
 [all:vars]
 #Keepalived virtual IP
+vrrp=false
 virtIp=23.105.241.66
 
-vrrp=false
-
+#DNS
 coreDns=true
+
+#ingress
+inggressOnVrrp=false
+ingressQuantity=3
+
+tainNodes=false
 
 kubeVersion=1.15.1-00
 
@@ -54,6 +62,3 @@ etcd_version=v3.3.13
 etcdToken=9489bf67bdfe1b4ae067d6fd9e7efefd
 
 keepalivedPass=56cf8dd754c90194d1600c483e10abfr
-
-[local]
-localhost ansible_connection=local

@@ -6,7 +6,7 @@
 
 - name: Get dashboard yaml file
   get_url:
-    url: https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+    url: https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended/kubernetes-dashboard.yaml
     dest: /opt/config/dashboard/kubernetes-dashboard.yaml
     mode: 0755
 
