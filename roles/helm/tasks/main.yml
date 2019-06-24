@@ -1,12 +1,18 @@
 - name: Get Helm tiller deploy files
   get_url:
-    url: https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get
+    url: https://git.io/get_helm.sh
     dest: /opt/config/helm.sh
-  become: yes
+  become: true
+
+- name: Change helm.sh access setings
+  file:
+    path: /opt/config/helm.sh
+    mode: '700'
+  become: true
 
 - name: Install helm
   shell: |
-    sh helm.sh
+     ./helm.sh
   args:
     chdir: /opt/config
   become: true

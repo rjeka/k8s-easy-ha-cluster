@@ -42,23 +42,6 @@
   args:
     chdir: /opt/config/
 
-- name: replace API server IP
-  replace:
-    dest: "{{ item }}"
-    regexp: '6443'
-    replace: '16443'
-  with_items:
-  - /etc/kubernetes/bootstrap-kubelet.conf
-  - /etc/kubernetes/kubelet.conf
-  when: apiLoadBalancer == "true"
-
-- name: restart kubelet
-  systemd:
-    name: kubelet
-    state: restarted
-    enabled: yes
-    daemon_reload: yes
-  when: apiLoadBalancer == "true"
 
 - name: restart CRI containerd
   systemd:

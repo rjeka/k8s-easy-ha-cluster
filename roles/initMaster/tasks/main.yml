@@ -39,16 +39,26 @@
     path: /opt/config/token.txt
     state: absent
 
-- name: Create token file
+- name: Create tokens file
   file:
     path: /opt/config/token.txt
     state: touch
     force: yes
+  when: inventory_hostname == "master1"
+
 
 - name: Print kubernetes token
   lineinfile:
     path: /opt/config/token.txt
-    line: "{{ kubernetesTokenDocker.stdout_lines | last }}"
+    line: "{{ kubernetesTokenDocker.stdout_lines }}"
+  when: inventory_hostname == "master1"
+
+- name: Get kubeadm join string
+  shell: |
+    echo $(cat /opt/config/token.txt.tmp | tail -2) > /opt/config/token.txt
+  args:
+    chdir: /opt/config/
+  when: inventory_hostname == "master1"
 
 
 - name: Copy init token to ansible host

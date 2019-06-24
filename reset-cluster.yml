@@ -10,7 +10,7 @@
 
 
 - name: reset kubernetes and etcd cluster
-  hosts: all
+  hosts: [masters, worknodes, ingressnodes]
   become: yes
   become_method: sudo
   gather_facts: no
@@ -107,6 +107,16 @@
       when:
         - inventory_hostname in groups['masters'] or inventory_hostname in groups['worknodes']
 
+    - name: delete ingress config
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+      - /opt/config/helm.sh
+      - /opt/config/mandatory.yaml
+      - /opt/config/service-nodeport.yaml
+
+
     - name: Purge kubeadm, kubelet, kubectl, and shared packages
       apt:
         name: "{{ item }}"
@@ -120,3 +130,4 @@
       - docker-ce
       - docker-ce-cli
       - containerd.io
+      - haproxy

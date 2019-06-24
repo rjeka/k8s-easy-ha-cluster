@@ -7,9 +7,9 @@ master2 ansible_host=10.73.69.24 keepalivedInterface=aggi
 master3 ansible_host=10.73.69.25 keepalivedInterface=aggi
 
 [worknodes]
-#node01 ansible_host=10.73.68.228
-#node02 ansible_host=10.73.69.220
-#node03 ansible_host=10.73.78.20
+node01 ansible_host=10.73.69.26
+node02 ansible_host=10.73.74.151
+node03 ansible_host=10.73.74.152
 
 
 [ingressnodes]

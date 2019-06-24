@@ -218,8 +218,16 @@
       include_role:
         name: ingress
 
+- name: install haproxy as LoadBalancer
+  hosts: [worknodes, ingressnodes]
 
-- name: Deploy Kubernetes dashboard ans heapster
+  tasks:
+    - name: install haproxy
+      include_role:
+        name: haproxy
+
+
+- name: Deploy Kubernetes dashboard ans top deploy
   hosts: master1
   become: yes
   become_method: sudo
@@ -228,10 +236,6 @@
     - name: Install dashboard
       include_role:
         name: dashboard
-
-    - name: Install heapster
-      include_role:
-        name: heapster
 
 
 - name: Install Helm
@@ -291,7 +295,7 @@
       register: dashboardToken
       become: false
 
-    - name: Print Cluster info
+    - name: Print Cluster info if virtIp on
       debug:
         msg: [
           "To enter new work nodes into the cluster, use the following command:",
@@ -299,3 +303,14 @@
           "Dashboard is available at: https://{{virtIp}}:30443",
           "Admin {{dashboardToken.stdout}}"
           ]
+      when: virtIp == "true"
+
+    - name: Print Cluster info if virtIp off
+      debug:
+        msg: [
+          "To enter new work nodes into the cluster, use the following command:",
+          "{{ kubeadmToken.stdout }}",
+          "Dashboard is available at: https://{{ hostvars[groups['masters'][0]]['ansible_hostname'] }}:30443",
+          "Admin {{dashboardToken.stdout}}"
+          ]
+      when: virtIp != "true"

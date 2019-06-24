@@ -1,6 +1,7 @@
 - name: Install ingress controller
   hosts: master1
-  gather_facts: no
+  gather_facts: yes
+  become: true
 
   vars:
     HOST_COUNT: "{{ groups['ingressnodes'] | length }}"
@@ -8,4 +9,4 @@
   tasks:
     - name: Install ingress controller
       include_role:
-        name: dashboard
+        name: initMaster
