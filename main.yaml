@@ -103,7 +103,7 @@
       include_role:
         name: initMaster
 
-
+#Init other masters
 - name: Init other masters
   hosts: [ master2, master3 ]
   become: yes
@@ -137,30 +137,16 @@
       include_role:
         name: initMaster
 
-#- name: Scale DNS to 2nd and 3rd master
-#  hosts: master1
-#  gather_facts: no
-
-#  tasks:
-#    - name: Pause while callico starts
-#      pause:
-#        prompt: "Wait starting CIDR and Kubernetes coredns"
-#        seconds: 15
-
-#    - name: Scale DNS
-#      shell: |
-#        kubectl scale --replicas=4 -n kube-system deployment/coredns
-#      become: false
-
+#Allow schedeue pods on masters node
 - name: master as the worknodes
   hosts: master1
-
 
   tasks:
     - name: tain nodes
       shell: |
         kubectl taint nodes --all node-role.kubernetes.io/master-
       when: tainNodes ==  "true"
+
 
 - name: Change API IP address
   hosts: master1
@@ -209,6 +195,7 @@
 - name: Install ingress controller
   hosts: master1
   gather_facts: no
+  become: true
 
   vars:
     HOST_COUNT: "{{ groups['ingressnodes'] | length }}"
@@ -218,13 +205,29 @@
       include_role:
         name: ingress
 
+#Haproxy as Loadbalancer for Worknodes (see docs and read.me)
 - name: install haproxy as LoadBalancer
   hosts: [worknodes, ingressnodes]
+  become: yes
 
   tasks:
     - name: install haproxy
       include_role:
         name: haproxy
+
+    - name: change kubernetes API address
+      replace:
+        path: /etc/kubernetes/kubelet.conf
+        regexp: "^(.*)server:(.*)$"
+        replace: "    server: https://127.0.0.1:6443"
+
+    - name: restart kubectl and docker
+      systemd:
+        name: "{{ item }}"
+      with_items:
+        - docker
+        - kubelet
+
 
 
 - name: Deploy Kubernetes dashboard ans top deploy
@@ -310,7 +313,7 @@
         msg: [
           "To enter new work nodes into the cluster, use the following command:",
           "{{ kubeadmToken.stdout }}",
-          "Dashboard is available at: https://{{ hostvars[groups['masters'][0]]['ansible_hostname'] }}:30443",
+          "Dashboard is available at: https://{{ hostvars[groups['masters'][0]]['ansible_host'] }}:30443",
           "Admin {{dashboardToken.stdout}}"
           ]
       when: virtIp != "true"

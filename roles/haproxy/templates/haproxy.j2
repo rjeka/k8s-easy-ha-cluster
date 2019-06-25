@@ -21,20 +21,20 @@ global
 	ssl-default-bind-options no-sslv3
 
 defaults
-	log	global
-	mode	http
-	option	httplog
-	option	dontlognull
+  log	global
+  mode	http
+  option	httplog
+  option	dontlognull
   timeout connect 5000
   timeout client  50000
   timeout server  50000
-	errorfile 400 /etc/haproxy/errors/400.http
-	errorfile 403 /etc/haproxy/errors/403.http
-	errorfile 408 /etc/haproxy/errors/408.http
-	errorfile 500 /etc/haproxy/errors/500.http
-	errorfile 502 /etc/haproxy/errors/502.http
-	errorfile 503 /etc/haproxy/errors/503.http
-	errorfile 504 /etc/haproxy/errors/504.http
+  errorfile 400 /etc/haproxy/errors/400.http
+  errorfile 403 /etc/haproxy/errors/403.http
+  errorfile 408 /etc/haproxy/errors/408.http
+  errorfile 500 /etc/haproxy/errors/500.http
+  errorfile 502 /etc/haproxy/errors/502.http
+  errorfile 503 /etc/haproxy/errors/503.http
+  errorfile 504 /etc/haproxy/errors/504.http
 
 
 frontend k8s-api
@@ -51,6 +51,6 @@ backend k8s-api
 	balance roundrobin
 	default-server port 6443 inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
 
-        server apiserver1 {{ hostvars[groups['masters'][0]]['ansible_hostname'] }} check
-        server apiserver2 {{ hostvars[groups['masters'][1]]['ansible_hostname'] }} check
-        server apiserver3 {{ hostvars[groups['masters'][0]]['ansible_hostname'] }} check
+        server apiserver1 {{ hostvars[groups['masters'][0]]['ansible_host'] }} check
+        server apiserver2 {{ hostvars[groups['masters'][1]]['ansible_host'] }} check
+        server apiserver3 {{ hostvars[groups['masters'][0]]['ansible_host'] }} check
