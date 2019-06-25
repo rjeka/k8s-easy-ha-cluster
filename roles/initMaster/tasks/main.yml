@@ -122,14 +122,15 @@
 
 - name:  install Calico CIDR
   shell: |
-    kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml && \
-    kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+    kubectl apply -f kubectl apply -f https://docs.projectcalico.org/v3.7/manifests/calico.yaml
   args:
     executable: /bin/bash
   become: false
   when:
     - inventory_hostname == "master1"
     - CIDR == "192.168.0.0/16"
+
+
 
 - name:  install Flanel CIDR
   shell: |
