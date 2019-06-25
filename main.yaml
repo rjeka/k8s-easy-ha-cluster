@@ -224,6 +224,7 @@
     - name: restart kubectl and docker
       systemd:
         name: "{{ item }}"
+        state: restarted
       with_items:
         - docker
         - kubelet
