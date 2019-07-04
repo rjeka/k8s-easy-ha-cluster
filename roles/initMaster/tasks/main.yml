@@ -9,18 +9,19 @@
     path: /opt/config/kubeadm
     state: directory
 
-- name: Config kubeadm-init.yaml whis keepalived
+- name: Copy сonfig kubeadm-init.yaml v1alpha3
   template:
-    src: kubeadm-init.yaml.tmpl
+    src: kubeadm-init.yaml.j2
     dest: /opt/config/kubeadm/kubeadm-init.yaml
-  when: vrrp == "true"
+  when: kubeaApi != "new"
+
+- name: Copy config kubeadm-init.yaml v1beta2
+  template:
+    src: kubeadm-init-new.yaml.j2
+    dest: /opt/config/kubeadm/kubeadm-init.yaml
+  when: kubeaApi == "new"
 
 
-- name: Configure kubeadm-init-haproxy.yaml without keepalived
-  template:
-    src: kubeadm-init-haproxy.yaml.tmpl
-    dest: /opt/config/kubeadm/kubeadm-init.yaml
-  when: vrrp == "false"
 
 #- name: pull images of k8s with the docker
 #  shell: |
@@ -120,15 +121,36 @@
    - "{{ files_to_copy.stdout_lines }}"
   when: inventory_hostname == "master1"
 
-- name:  install Calico CIDR
+- name:  install Calico CNI old version
   shell: |
-    kubectl apply -f kubectl apply -f https://docs.projectcalico.org/v3.7/manifests/calico.yaml
+    kubectl apply -f https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml && \
+    kubectl apply -f https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
   args:
     executable: /bin/bash
   become: false
   when:
     - inventory_hostname == "master1"
     - CIDR == "192.168.0.0/16"
+    - kubeVersion != "stable"
+
+- name:  install Calico CNI new version
+  shell: |
+    kubectl apply -f https://docs.projectcalico.org/v3.7/manifests/calico.yaml
+  args:
+    executable: /bin/bash
+  become: false
+  when:
+    - inventory_hostname == "master1"
+    - CIDR == "192.168.0.0/16"
+    - kubeVersion == "stable"
+
+- name: install Canal CNI
+  shell: |
+    kubectl apply -f https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/canal/rbac.yaml && \
+    kubectl apply -f https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/canal/canal.yaml
+  when:
+    - inventory_hostname == "master1"
+    - CIDR == "10.244.0.0/16"
 
 
 

@@ -29,7 +29,8 @@ inggressOnVrrp=false
 tainNodes=false
 
 #kubernetes version
-kubeVersion=1.15.1-00
+kubeVersion=1.13.5
+kubeaApi == "old"
 
 #Api Load balancer on master or on work nodes
 apiLoadBalancer=nodes
@@ -50,13 +51,14 @@ garbageCollection=false
 
 [masters:vars]
 #CIDR address space. When use calico is 192.168.0.0/16 or 10.244.0.0/16 when use Flanel
-CIDR=192.168.0.0/16
+#CIDR=192.168.0.0/16
+CIDR=10.244.0.0/16
 
 # kubernetes cluster token, you can use 'kubeadm token generate' to get a new one
 K8SHA_TOKEN=i2sbjw.is6l5m5a53y6v9nu
 
 #Etcd version for kubernetes and kubeadm 1.11 etcd must be 3.2.17
-etcd_version=v3.3.13
+etcd_version=v3.3.10
 
 
 #Etcd cluster token

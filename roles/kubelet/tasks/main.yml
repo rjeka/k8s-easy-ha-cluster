@@ -24,10 +24,17 @@
     state: present
 
 
-- name: Installing kubeadm, kubelet, kubectl, and shared packages
+- name: Installing kubeadm, kubelet, kubectl, and shared packages stable
   apt:
     name: ['kubelet', 'kubeadm', 'kubectl', 'unzip', 'tar', 'btrfs-tools', 'libseccomp2', 'socat', 'util-linux', 'curl', 'nfs-common', 'portmap', 'ceph-common', 'python-apt']
     update_cache: yes
+  when: kubeVersion == "stable"
+
+- name: Installing kubeadm, kubelet, kubectl, and shared packages with version
+  apt:
+    name: ['kubelet={{kubeVersion}}-00', 'kubeadm={{kubeVersion}}-00', 'kubectl={{kubeVersion}}-00', 'unzip', 'tar', 'btrfs-tools', 'libseccomp2', 'socat', 'util-linux', 'curl', 'nfs-common', 'portmap', 'ceph-common', 'python-apt']
+    update_cache: yes
+  when: kubeVersion != "stable"
 
 
 - name: Enable & start kubelet

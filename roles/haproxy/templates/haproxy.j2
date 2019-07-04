@@ -53,4 +53,4 @@ backend k8s-api
 
         server apiserver1 {{ hostvars[groups['masters'][0]]['ansible_host'] }} check
         server apiserver2 {{ hostvars[groups['masters'][1]]['ansible_host'] }} check
-        server apiserver3 {{ hostvars[groups['masters'][0]]['ansible_host'] }} check
+        server apiserver3 {{ hostvars[groups['masters'][2]]['ansible_host'] }} check

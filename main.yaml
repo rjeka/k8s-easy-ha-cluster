@@ -215,9 +215,15 @@
       include_role:
         name: haproxy
 
-    - name: change kubernetes API address
+    - name: change kubernetes API address in kubelet.conf
       replace:
         path: /etc/kubernetes/kubelet.conf
+        regexp: "^(.*)server:(.*)$"
+        replace: "    server: https://127.0.0.1:6443"
+
+    - name: change kubernetes API address in bootstrap-kubelet.conf
+      replace:
+        path: /etc/kubernetes/bootstrap-kubelet.conf
         regexp: "^(.*)server:(.*)$"
         replace: "    server: https://127.0.0.1:6443"
 
