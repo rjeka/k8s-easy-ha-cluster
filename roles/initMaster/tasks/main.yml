@@ -9,18 +9,10 @@
     path: /opt/config/kubeadm
     state: directory
 
-- name: Copy сonfig kubeadm-init.yaml v1alpha3
+- name: Copy сonfig kubeadm-init.yaml v1beta1
   template:
     src: kubeadm-init.yaml.j2
     dest: /opt/config/kubeadm/kubeadm-init.yaml
-  when: kubeaApi != "new"
-
-- name: Copy config kubeadm-init.yaml v1beta2
-  template:
-    src: kubeadm-init-new.yaml.j2
-    dest: /opt/config/kubeadm/kubeadm-init.yaml
-  when: kubeaApi == "new"
-
 
 
 #- name: pull images of k8s with the docker
@@ -131,7 +123,7 @@
   when:
     - inventory_hostname == "master1"
     - CIDR == "192.168.0.0/16"
-    - kubeVersion != "stable"
+    - kubeApi == "old"
 
 - name:  install Calico CNI new version
   shell: |
@@ -142,24 +134,11 @@
   when:
     - inventory_hostname == "master1"
     - CIDR == "192.168.0.0/16"
-    - kubeVersion == "stable"
+    - kubeApi == "new"
 
-- name: install Canal CNI
+- name: install Flanel
   shell: |
-    kubectl apply -f https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/canal/rbac.yaml && \
-    kubectl apply -f https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/canal/canal.yaml
-  when:
-    - inventory_hostname == "master1"
-    - CIDR == "10.244.0.0/16"
-
-
-
-- name:  install Flanel CIDR
-  shell: |
-    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.10.0/Documentation/kube-flannel.yml
-  args:
-    executable: /bin/bash
-  become: false
+    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/62e44c867a2846fefb68bd5f178daf4da3095ccb/Documentation/kube-flannel.yml
   when:
     - inventory_hostname == "master1"
     - CIDR == "10.244.0.0/16"

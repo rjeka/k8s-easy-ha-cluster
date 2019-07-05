@@ -3,21 +3,26 @@ apiVersion: kubeadm.k8s.io/v1alpha3
 kind: InitConfiguration
 nodeRegistration:
   criSocket: /run/containerd/containerd.sock
-
+{% endif %}
+{% if criType != "containerd" %}
+---
+apiVersion: kubeadm.k8s.io/v1beta1
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: "{{ansible_host}}"
 {% endif %}
 ---
-apiVersion: kubeadm.k8s.io/v1alpha3
+apiVersion: kubeadm.k8s.io/v1beta1
 kind: ClusterConfiguration
-kubernetesVersion: "{{ kubeVersion }}"
-apiServerCertSANs:
-- {{ hostvars[groups['masters'][0]]['ansible_hostname'] }}
-- {{ hostvars[groups['masters'][1]]['ansible_hostname'] }}
-- {{ hostvars[groups['masters'][2]]['ansible_hostname'] }}
-- {{ hostvars[groups['masters'][0]]['ansible_host'] }}
-- {{ hostvars[groups['masters'][1]]['ansible_host'] }}
-- {{ hostvars[groups['masters'][2]]['ansible_host'] }}
-- {{virtIp}}
-- 127.0.0.1
+kubernetesVersion: "v{{ kubeVersion }}"
+apiServer:
+  certSANs:
+  - {{ hostvars[groups['masters'][0]]['ansible_host'] }}
+  - {{ hostvars[groups['masters'][1]]['ansible_host'] }}
+  - {{ hostvars[groups['masters'][2]]['ansible_host'] }}
+{% if vrrp == "true" %}
+  - {{virtIp}}
+{% endif %}
 {% if vrrp == "false" %}
 controlPlaneEndpoint: {{ansible_host}}
 {% endif %}
@@ -32,5 +37,5 @@ etcd:
     - http://{{ hostvars[groups['masters'][2]]['ansible_host'] }}:2379
 networking:
   podSubnet: {{CIDR}}
-apiServerExtraArgs:
-  apiserver-count: "3"
+  serviceSubnet: "10.96.0.0/12"
+  dnsDomain: "cluster.local"

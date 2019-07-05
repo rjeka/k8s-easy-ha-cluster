@@ -214,18 +214,21 @@
     - name: install haproxy
       include_role:
         name: haproxy
+      when: haproxy == "true"
 
     - name: change kubernetes API address in kubelet.conf
       replace:
         path: /etc/kubernetes/kubelet.conf
         regexp: "^(.*)server:(.*)$"
         replace: "    server: https://127.0.0.1:6443"
+      when: haproxy == "true"
 
     - name: change kubernetes API address in bootstrap-kubelet.conf
       replace:
         path: /etc/kubernetes/bootstrap-kubelet.conf
         regexp: "^(.*)server:(.*)$"
         replace: "    server: https://127.0.0.1:6443"
+      when: haproxy == "true"
 
     - name: restart kubectl and docker
       systemd:
@@ -234,6 +237,7 @@
       with_items:
         - docker
         - kubelet
+      when: haproxy == "true"
 
 
 
