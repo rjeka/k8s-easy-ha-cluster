@@ -10,7 +10,8 @@ master3 ansible_host=10.73.75.200 keepalivedInterface=aggi
 node01 ansible_host=10.73.75.201
 node02 ansible_host=10.73.75.202
 node03 ansible_host=10.73.75.203
-
+node04 ansible_host=10.73.75.240
+node05 ansible_host=10.73.75.196
 
 [ingressnodes]
 

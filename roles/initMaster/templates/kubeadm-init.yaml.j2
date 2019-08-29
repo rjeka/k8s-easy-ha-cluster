@@ -1,25 +1,16 @@
-{% if criType == "containerd" %}
-apiVersion: kubeadm.k8s.io/v1alpha3
-kind: InitConfiguration
-nodeRegistration:
-  criSocket: /run/containerd/containerd.sock
-localAPIEndpoint:
-    advertiseAddress: "{{ansible_host}}"
-{% endif %}
 
-{% if criType != "containerd" %}
----
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: InitConfiguration
 localAPIEndpoint:
   advertiseAddress: "{{ansible_host}}"
-{% endif %}
+
 ---
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: ClusterConfiguration
 kubernetesVersion: "v{{ kubeVersion }}"
 apiServer:
   certSANs:
+  - 127.0.0.1
   - {{ hostvars[groups['masters'][0]]['ansible_host'] }}
   - {{ hostvars[groups['masters'][1]]['ansible_host'] }}
   - {{ hostvars[groups['masters'][2]]['ansible_host'] }}
