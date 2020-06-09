@@ -30,6 +30,6 @@ etcd:
     - http://{{ hostvars[groups['masters'][1]]['ansible_host'] }}:2379
     - http://{{ hostvars[groups['masters'][2]]['ansible_host'] }}:2379
 networking:
-  podSubnet: {{CIDR}}
+  podSubnet: {{ CIDR }}
   serviceSubnet: "10.96.0.0/12"
   dnsDomain: "cluster.local"

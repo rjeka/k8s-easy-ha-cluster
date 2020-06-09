@@ -3,25 +3,30 @@
     name: swap
     fstype: swap
     state: absent
+  tags: kubelet
 
 - name: Disable swap
   shell: swapoff -a
   when: ansible_swaptotal_mb > 0
+  tags: kubelet
 
 
 - name: Instal pre packages
   apt:
     name: apt-transport-https
+  tags: kubelet
 
 - name: Add kubernetes gpg key
   apt_key:
     url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
     state: present
+  tags: kubelet
 
 - name: Add kubernetes repositorie
   apt_repository:
     repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
     state: present
+  tags: kubelet
 
 
 - name: Installing kubeadm, kubelet, kubectl, and shared packages stable
@@ -29,12 +34,14 @@
     name: ['kubelet', 'kubeadm', 'kubectl', 'unzip', 'tar', 'btrfs-tools', 'libseccomp2', 'socat', 'util-linux', 'curl', 'nfs-common', 'portmap', 'ceph-common', 'python-apt']
     update_cache: yes
   when: kubeVersion == "stable"
+  tags: kubelet
 
 - name: Installing kubeadm, kubelet, kubectl, and shared packages with version
   apt:
     name: ['kubelet={{kubeVersion}}-00', 'kubeadm={{kubeVersion}}-00', 'kubectl={{kubeVersion}}-00', 'unzip', 'tar', 'btrfs-tools', 'libseccomp2', 'socat', 'util-linux', 'curl', 'nfs-common', 'portmap', 'ceph-common', 'python-apt']
     update_cache: yes
   when: kubeVersion != "stable"
+  tags: kubelet
 
 
 - name: Enable & start kubelet
@@ -43,3 +50,4 @@
     state: restarted
     enabled: yes
     daemon_reload: yes
+  tags: kubelet

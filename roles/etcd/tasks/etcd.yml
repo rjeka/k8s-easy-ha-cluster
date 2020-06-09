@@ -1,0 +1,25 @@
+---
+
+- name: Create etcd env file
+  template:
+    src: etcd.env.tmpl
+    dest: /etc/etcd.env
+  tags: etcd
+
+- name: create etcd config dir
+  file:
+    path: /etc/etcd
+    state: directory
+
+
+- name: config etcd
+  template:
+    src: etcd.conf.j2
+    dest: /etc/etcd/etcd.conf
+  tags: etcd
+
+- name: install etcd
+  apt:
+    name: "etcd={{ etcd_version }}"
+    update_cache: yes
+  tags: etcd

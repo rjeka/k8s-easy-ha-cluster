@@ -2,70 +2,10 @@
 localhost ansible_connection=local
 
 [masters]
-master1 ansible_host=10.73.75.198 keepalivedInterface=aggi
-master2 ansible_host=10.73.75.199 keepalivedInterface=aggi
-master3 ansible_host=10.73.75.200 keepalivedInterface=aggi
+master1 ansible_host=10.1.131.11
+master2 ansible_host=10.1.131.12
+master3 ansible_host=10.1.131.13
 
 [worknodes]
-node01 ansible_host=10.73.75.201
-node02 ansible_host=10.73.75.202
-node03 ansible_host=10.73.75.203
-node04 ansible_host=10.73.75.240
-node05 ansible_host=10.73.75.196
-
-[ingressnodes]
-
-[all:vars]
-#Keepalived virtual IP
-vrrp=false
-virtIp=23.105.241.66
-
-#DNS
-coreDns=true
-
-#ingress
-inggressOnVrrp=false
-
-#masters as worknode
-tainNodes=false
-
-#kubernetes version
-kubeVersion=1.13.5
-kubeApi=old
-
-#Api Load balancer on master or on work nodes
-apiLoadBalancer=nodes
-
-#haproxy
-haproxy=false
-
-#Install Helm
-helm=true
-
-#Dynamic config Api Server (true or false)
-DynamicKubeletConfig=true
-
-criType=docker
-
-#If you are using containerd, enter the version (now stable 1.1.0-rc.0)
-criContainersVersion=1.2.5
-
-#If you want to delete the config files, the CRI and ETCD archives are then true
-garbageCollection=false
-
-[masters:vars]
-#CIDR address space. When use calico is 192.168.0.0/16 or 10.244.0.0/16 when use Flanel
-CIDR=192.168.0.0/16
-#CIDR=10.244.0.0/16
-
-# kubernetes cluster token, you can use 'kubeadm token generate' to get a new one
-K8SHA_TOKEN=i2sbjw.is6l5m5a53y6v9nu
-
-#Etcd version for kubernetes and kubeadm 1.11 etcd must be 3.2.17
-etcd_version=v3.3.10
 
 
-#Etcd cluster token
-etcdToken=9489bf67bdfe1b4ae067d6fd9e7efefd
-
-keepalivedPass=56cf8dd754c90194d1600c483e10abfr

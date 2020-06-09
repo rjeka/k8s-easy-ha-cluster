@@ -9,5 +9,3 @@
         name: "{{ item }}"
       with_items:
       - etcd
-      #- docker
-      #- kubelet

@@ -1,0 +1,64 @@
+---
+- name: install cfssl
+  get_url:
+    url: "{{ item.url }}"
+    dest: "{{ item.dest }}"
+    mode: a+x
+  loop:
+    - { url: 'https://pkg.cfssl.org/R1.2/cfssl_linux-amd64', dest: '/usr/local/bin/cfssl' }
+    - { url: 'https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64', dest: '/usr/local/bin/cfssljson' }
+
+
+- name: create etcd ssl dir
+  file:
+    path: /opt/etcd-ssl
+    state: directory
+  tags: ssl
+
+- name: create ca-config.json
+  template:
+    src: ca-config.json.j2
+    dest: /opt/etcd-ssl/ca-config.json
+  tags: ssl
+
+- name: create ca-csr.json
+  shell: |
+    cfssl print-defaults csr > ca-csr.json
+  args:
+    chdir: /opt/etcd-ssl
+  tags: ssl
+
+- name: generating a new CA key and certificate from CSR
+  shell: |
+    cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
+  args:
+    chdir: /opt/etcd-ssl
+  tags: ssl
+
+- name: create server.json
+  template:
+    src: server.json.j2
+    dest: /opt/etcd-ssl/server.json
+  tags: ssl
+
+- name: generate server сertificate
+  shell: |
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server server.json | cfssljson -bare server
+  args:
+    chdir: /opt/etcd-ssl
+  tags: ssl
+
+- name: create client certificate
+  template:
+    src: client.json.j2
+    dest: /opt/etcd-ssl/client.json
+  tags: ssl
+
+- name: generate client certificate
+  shell: |
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client client.json | cfssljson -bare client
+  args:
+    chdir: /opt/etcd-ssl
+  tags: ssl
+
+-
