@@ -1,4 +1,6 @@
 ---
+#https://mcs.mail.ru/blog/zapuskaem-etcd-klaster-dlya-kubernetes
+
 - name: install cfssl
   get_url:
     url: "{{ item.url }}"
@@ -7,7 +9,7 @@
   loop:
     - { url: 'https://pkg.cfssl.org/R1.2/cfssl_linux-amd64', dest: '/usr/local/bin/cfssl' }
     - { url: 'https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64', dest: '/usr/local/bin/cfssljson' }
-
+  tags: ssl
 
 - name: create etcd ssl dir
   file:
@@ -61,4 +63,40 @@
     chdir: /opt/etcd-ssl
   tags: ssl
 
--
+- name: create  peer-to-peer certificate
+  template:
+    src: member.json.j2
+    dest: /opt/etcd-ssl/member.json
+  tags: ssl
+
+- name: generate peer-to-peer certificate
+  shell: |
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer member.json | cfssljson -bare member
+  args:
+    chdir: /opt/etcd-ssl
+  tags: ssl
+
+- name: create directory for etcd certs
+  file:
+    path: /etc/ssl/etcd
+    state: directory
+    owner: etcd
+    group: etcd
+  tags: ssl
+
+
+- name: copy certs
+  copy:
+    src: /opt/etcd-ssl/{{ item }}
+    dest: /etc/ssl/etcd/{{ item }}
+    owner: etcd
+    group: etcd
+    mode: '0660'
+    remote_src: yes
+  loop:
+    - server.pem
+    - member.pem
+    - server-key.pem
+    - member-key.pem
+    - ca.pem
+  tags: ssl

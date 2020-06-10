@@ -1,6 +1,11 @@
 [local]
 localhost ansible_connection=local
 
+[k8s:children]
+masters
+worknodes
+ingress
+
 [masters]
 master1 ansible_host=10.1.131.11
 master2 ansible_host=10.1.131.12

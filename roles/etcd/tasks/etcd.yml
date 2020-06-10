@@ -1,15 +1,20 @@
 ---
 
-- name: Create etcd env file
+- name: create etcd env file
   template:
-    src: etcd.env.tmpl
+    src: etcd.env.j2
     dest: /etc/etcd.env
   tags: etcd
 
-- name: create etcd config dir
+
+- name: recreate etcd config dir
   file:
     path: /etc/etcd
-    state: directory
+    state: "{{ item }}"
+  loop:
+    - absent
+    - directory
+  tags: etcd
 
 
 - name: config etcd
@@ -18,8 +23,33 @@
     dest: /etc/etcd/etcd.conf
   tags: etcd
 
+
+- name: config etcd systemd
+  lineinfile:
+    path: /usr/lib/systemd/system/etcd.service
+    regexp: '^EnvironmentFile='
+    line: EnvironmentFile=/etc/etcd/etcd.conf
+  tags: etcd
+
+
 - name: install etcd
   apt:
     name: "etcd={{ etcd_version }}"
     update_cache: yes
+  tags: etcd
+
+
+- name: start etcd cluster
+  systemd:
+    name: etcd
+    state: started
+    daemon_reload: yes
+  tags: etcd
+
+
+- name: config cluster after start
+  lineinfile:
+    path: /etc/etcd/etcd.conf
+    regexp: '^ETCD_INITIAL_CLUSTER_STATE='
+    line: ETCD_INITIAL_CLUSTER_STATE="existing"
   tags: etcd
