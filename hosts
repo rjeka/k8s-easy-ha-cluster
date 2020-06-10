@@ -6,11 +6,11 @@ masters
 worknodes
 ingress
 
-[masters]
+[kube_masters]
 master1 ansible_host=10.1.131.11
 master2 ansible_host=10.1.131.12
 master3 ansible_host=10.1.131.13
 
-[worknodes]
+
 
 

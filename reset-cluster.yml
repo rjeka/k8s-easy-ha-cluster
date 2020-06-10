@@ -48,6 +48,7 @@
         state: stopped
       when: inventory_hostname in groups['masters']
       ignore_errors: true
+      tags: etcd
 
     - name: stop CRI containerd
       systemd:
@@ -62,6 +63,7 @@
         path: /var/lib/etcd/
         state: absent
       when: inventory_hostname in groups['masters']
+      tags: etcd
 
     - name: Delete etcd
       file:
@@ -76,7 +78,7 @@
       - /usr/local/bin/READMEv2-etcdctl.md
       when:
         - inventory_hostname in groups['masters']
-        - garbageCollection == "true"
+      tags: etcd
 
     - name: Delete containerd
       file:
