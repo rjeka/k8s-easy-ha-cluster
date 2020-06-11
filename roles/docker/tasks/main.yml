@@ -11,7 +11,7 @@
     state: present
   tags: docker
 
-- name: Remove a Apt specific signing key, leading 0x is valid
+- name: Remove a Apt specific signing key
   apt_key:
     id: 0EBFCD88
     state: present
@@ -28,6 +28,7 @@
   lineinfile:
     path: /etc/apt/sources.list
     line: "{{debString.stdout}}"
+  tags: docker
 
 - name: Update apt cache
   apt:
@@ -38,6 +39,9 @@
 - name: Installing docker
   apt:
     name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+  tags: docker
+
+
 
 - name: Set up the Docker daemon
   template:

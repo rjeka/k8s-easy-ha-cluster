@@ -1,23 +1,17 @@
-- name: restart Keepalived
-  systemd:
-    name: keepalived
-    state: restarted
-  when: vrrp == "true"
+---
 
 - name: Create kubeadm config directory
   file:
     path: /opt/config/kubeadm
     state: directory
+  tags: first_master
 
-- name: Copy сonfig kubeadm-init.yaml v1beta1
+
+- name: Copy сonfig kubeadm-init.yaml
   template:
     src: kubeadm-init.yaml.j2
     dest: /opt/config/kubeadm/kubeadm-init.yaml
-
-
-#- name: pull images of k8s with the docker
-#  shell: |
-#    kubeadm config images pull
+  tags: first_master
 
 
 - name: Create master node
@@ -25,46 +19,61 @@
     kubeadm init --config=kubeadm-init.yaml
   args:
     chdir: /opt/config/kubeadm/
+  tags: first_master
 
 - name: Reset kubernetes token file
   file:
     path: /opt/config/token.txt
     state: absent
+  tags: first_master
+
 
 - name: Create tokens file
   file:
     path: /opt/config/token.txt
     state: touch
     force: yes
-  when: inventory_hostname == "master1"
+  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  tags: first_master
+
 
 
 - name: Add export KUBECONFIG=/etc/kubernetes/admin.conf to bashrc
   lineinfile:
     path: /root/.bashrc
     line: 'export KUBECONFIG=/etc/kubernetes/admin.conf'
+  tags: first_master
 
 - name: Apply bashrc changes
   shell: |
     source /root/.bashrc
   args:
     executable: /bin/bash
+  tags: first_master
+
+
 
 - name: create kubernetes config directory
   file:
     path: ~/.kube/
     state: directory
   become: false
+  tags: first_master
 
 - name: create kubernetes root config directory
   file:
     path: /root/.kube/
     state: directory
+  tags: first_master
+
 
 - name: permissions for admin.conf
   file:
     path: /etc/kubernetes/admin.conf
     mode: 0775
+  tags: first_master
+
+
 
 - name: copy admin.conf to home directory
   copy:
@@ -73,72 +82,50 @@
     mode: 0755
     remote_src: True
   become: false
+  tags: first_master
 
 - name: copy admin.conf to root home directory
   copy:
     src: /etc/kubernetes/admin.conf
     dest: "/root/.kube/config"
     remote_src: true
+  tags: first_master
 
 - name: Get kubeadm token
   shell: |
     kubeadm token create --print-join-command --ttl=0
   register: kubeadmToken
   when: inventory_hostname == "master1"
-
+  tags: first_master
 
 - name: Put kubernetes token to file
   lineinfile:
     path: /opt/config/token.txt
     line: "{{ kubeadmToken.stdout }}"
-  when: inventory_hostname == "master1"
+  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  tags: first_master
 
 - name: Copy init token to ansible host
   fetch:
     src: /opt/config/token.txt
     dest: /tmp/k8s/
-  when: inventory_hostname == "master1"
+  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  tags: first_master
+
 
 - name: Get file names to copy
   shell: |
     find /etc/kubernetes/pki -type f
   register: files_to_copy
   when: inventory_hostname == "master1"
+  tags: first_master
+
 
 - name: Copy cert to ansiblehost
   fetch:
     src: "{{ item }}"
-    dest: /tmp/k8s/
+    dest: "/tmp/k8s/{{ item }}"
   with_items:
    - "{{ files_to_copy.stdout_lines }}"
   when: inventory_hostname == "master1"
-
-- name:  install Calico CNI old version
-  shell: |
-    kubectl apply -f https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml && \
-    kubectl apply -f https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
-  args:
-    executable: /bin/bash
-  become: false
-  when:
-    - inventory_hostname == "master1"
-    - CIDR == "192.168.0.0/16"
-    - kubeApi == "old"
-
-- name:  install Calico CNI new version
-  shell: |
-    kubectl apply -f https://docs.projectcalico.org/v3.7/manifests/calico.yaml
-  args:
-    executable: /bin/bash
-  become: false
-  when:
-    - inventory_hostname == "master1"
-    - CIDR == "192.168.0.0/16"
-    - kubeApi == "new"
-
-- name: install Flanel
-  shell: |
-    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/62e44c867a2846fefb68bd5f178daf4da3095ccb/Documentation/kube-flannel.yml
-  when:
-    - inventory_hostname == "master1"
-    - CIDR == "10.244.0.0/16"
+  tags: first_master

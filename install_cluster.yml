@@ -7,18 +7,40 @@
   tasks:
     - name: create temp cert directory
       file:
-        path: /tmp/k8s
+        path: "{{ item }}"
         state: directory
         force: yes
+      loop:
+        - /tmp/k8s
+        - /tmp/etcd/certs/
+      tags:
+        - etcd
+        - ssl
 
 
 # Installing Kubernetes
-- name: Installing shared packages and Kubernetes for the masters and work nodes
-  hosts: [masters, worknodes, ingressnodes ]
+- name: Installing shared packages Docker and Kubernetes for the masters and work nodes
+  hosts: [kube_masters, kube_workers, kube_ingress ]
   become: yes
   become_method: sudo
 
   tasks:
+    - name: set sysctl
+      sysctl:
+        name: "{{ item }}"
+        value: "1"
+      loop:
+        - net.ipv4.ip_forward
+      tags:
+        - kubelet
+        - docker
+
+    - name: Install docker
+      include_role:
+        name: docker
+      tags: docker
+
+
     - name: Install kubernetes
       include_role:
         name: "{{ item }}"
@@ -27,28 +49,10 @@
       tags: kubelet
 
 
-#Installing CRI - conainerd or docker
-- name: Installing Docker
-  hosts: [masters, worknodes, ingressnodes]
-  become: yes
-  become_method: sudo
-
-  tasks:
-    - name: enable ip_forward
-      sysctl:
-        name: net.ipv4.ip_forward
-        value: 1
-      tags: docker
-
-    - name: Install docker
-      include_role:
-        name: docker
-      tags: docker
-
 
 #Install the soft that is only needed on the masters
 - name: Install ETCD
-  hosts: masters
+  hosts: [kube_masters]
   become: yes
   become_method: sudo
 
@@ -61,3 +65,29 @@
       tags:
         - etcd
         - ssl
+
+#Init First master
+- name: Init first master
+  hosts: [kube_masters]
+  become: yes
+  become_method: sudo
+
+  tasks:
+    - name: install git
+      apt:
+        name: git
+      tags: first_master
+      when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+
+    - name: Reset Old Cluster and del docker containers
+      shell: |
+        kubeadm reset --force
+      tags: first_master
+      when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+
+
+    - name: Init First master {{ansible_hostname}}
+      include_role:
+        name: init_first_master
+      tags: first_master
+      when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"

@@ -1,0 +1,36 @@
+
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: "{{ansible_host}}"
+
+---
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: ClusterConfiguration
+{% if kubeVersion != "stable" %}
+kubernetesVersion: "v{{ kubeVersion }}"
+{% endif %}
+{% if kubeVersion != "stable" %}
+kubernetesVersion: "stable"
+{% endif %}
+apiServer:
+  certSANs:
+  - "127.0.0.1"
+  - "{{ hostvars[groups['kube_masters'][0]]['ansible_hostname'] }}"
+  - "{{ hostvars[groups['kube_masters'][1]]['ansible_hostname'] }}"
+  - "{{ hostvars[groups['kube_masters'][2]]['ansible_hostname'] }}"
+  - "{{ hostvars[groups['kube_masters'][0]]['ansible_host'] }}"
+  - "{{ hostvars[groups['kube_masters'][1]]['ansible_host'] }}"
+  - "{{ hostvars[groups['kube_masters'][2]]['ansible_host'] }}"
+etcd:
+  external:
+    endpoints:
+    - "https://{{ hostvars[groups['kube_masters'][0]]['ansible_host'] }}:2379"
+    - "https://{{ hostvars[groups['kube_masters'][1]]['ansible_host'] }}:2379"
+    - "https://{{ hostvars[groups['kube_masters'][2]]['ansible_host'] }}:2379"
+    caFile: /etc/ssl/etcd/ca.pem
+    certFile: /etc/ssl/etcd/client.pem
+    keyFile: /etc/ssl/etcd/client-key.pem
+networking:
+  podSubnet: "{{ CIDR }}"
+

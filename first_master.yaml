@@ -1,0 +1,25 @@
+#Init First master
+- name: Init first master
+  hosts: [kube_masters]
+  become: yes
+  become_method: sudo
+
+  tasks:
+    - name: install git
+      apt:
+        name: git
+      tags: first_master
+      when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+
+    - name: Reset Old Cluster and del docker containers
+      shell: |
+        kubeadm reset --force
+      tags: first_master
+      when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+
+
+    - name: Init First master {{ansible_hostname}}
+      include_role:
+        name: init_first_master
+      tags: first_master
+      when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
