@@ -1,0 +1,36 @@
+---
+
+- name: Create master node
+  shell: |
+    kubeadm init --config=kubeadm-init.yaml
+  args:
+    chdir: /opt/config/kubeadm/
+  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  tags:
+    - kube_master
+    - first_masters
+
+
+- name: Get file names to copy
+  shell: |
+    ls -1
+  args:
+    chdir: /etc/kubernetes/pki
+  register: files_to_copy
+  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  tags:
+    - kube_master
+    - first_masters
+
+- name: Copy cert to ansiblehost
+  fetch:
+    src: "/etc/kubernetes/pki/{{ item }}"
+    dest: "/tmp/k8s/{{ item }}"
+    flat: yes
+  with_items:
+    - "{{ files_to_copy.stdout_lines }}"
+  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  tags:
+    - kube_master
+    - first_masters
+

@@ -1,0 +1,10 @@
+---
+
+- name: add worker to cluster
+  shell: |
+    cat token.txt | bash
+  args:
+    chdir: /opt/config/kubeadm
+  tags:
+    - kube_workers
+    - add

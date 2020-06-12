@@ -1,0 +1,32 @@
+---
+- name: del local certificate
+  hosts: localhost
+
+  tasks:
+    - name:  create local tmp directory
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - /tmp/k8s/
+        - /tmp/etcd/certs/
+      tags:
+        - ssl
+        - copy
+
+
+
+- hosts: [kube_masters]
+  remote_user: itadmin
+  become: true
+
+  tasks:
+    - name: Install etcd
+      include_role:
+        name: "{{ item }}"
+      with_items:
+        - etcd
+      tags:
+        - etcd
+        - ssl
+        - copy

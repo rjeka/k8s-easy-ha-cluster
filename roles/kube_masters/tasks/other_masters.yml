@@ -1,0 +1,33 @@
+---
+
+- name: copy kubernetes cert
+  copy:
+    src: /tmp/k8s/{{ item }}
+    dest: /etc/kubernetes/pki/{{ item }}
+  with_items:
+    - apiserver-kubelet-client.crt
+    - apiserver-kubelet-client.key
+    - apiserver.crt
+    - apiserver.key
+    - ca.crt
+    - ca.key
+    - front-proxy-ca.crt
+    - front-proxy-ca.key
+    - front-proxy-client.crt
+    - front-proxy-client.key
+    - sa.key
+    - sa.pub
+  tags:
+    - kube_master
+    - other_masters
+  when: inventory_hostname != "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+
+- name: Create master node
+  shell: |
+    kubeadm init --config=kubeadm-init.yaml
+  args:
+    chdir: /opt/config/kubeadm/
+  when: inventory_hostname != "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  tags:
+    - kube_master
+    - other_masters

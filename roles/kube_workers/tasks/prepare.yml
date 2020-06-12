@@ -1,0 +1,17 @@
+---
+
+- name: Create kubeadm config directory
+  file:
+    path: /opt/config/kubeadm
+    state: directory
+  tags:
+    - kube_workers
+    - prepare
+
+- name: Copy kubeadm token
+  copy:
+    src: /tmp/k8s/token.txt
+    dest: /opt/config/kubeadm/token.txt
+  tags:
+    - kube_workers
+    - prepare

@@ -5,18 +5,19 @@
   tasks:
     - name:  del local certificate
       file:
-        path: /tmp/k8s/
+        path: "{{ item }}"
         state: absent
+      loop:
+        - /tmp/k8s
+        - /tmp/etcd/certs/
 
 
-- name: reset kubernetes and etcd cluster
-  hosts: [k8s]
+- name: reset kubernetes  cluster
+  hosts: [kube_masters, kube_ingress, kube_workers]
   become: yes
   become_method: sudo
   gather_facts: no
 
-  vars:
-    HOST_COUNT: "{{ groups['ingressnodes'] | length }}"
 
   tasks:
     - name: Reset Kubernetes cluster
@@ -25,18 +26,33 @@
       become: true
       ignore_errors: true
 
-
-    - name: Purge nginx
+    - name: Purge kubeadm, kubelet, kubectl, and shared packages
       apt:
-        name: nginx
+        name: "{{ item }}"
         state: absent
-        purge: true
-      when:
-        - inventory_hostname in groups['kube_masters']
-        - apiLoadBalancer == "true"
-      ignore_errors: true
+        purge: yes
+        force: yes
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - haproxy
 
 
+
+- name: reset etcd cluster
+  hosts: [kube_masters]
+  become: yes
+  become_method: sudo
+  gather_facts: no
+
+  vars:
+    HOST_COUNT: "{{ groups['ingressnodes'] | length }}"
+
+  tasks:
     - name: stop etcd
       systemd:
         name: etcd
@@ -69,35 +85,9 @@
       tags: etcd
 
 
-    - name: Purge docker
-      apt:
-        name: docker
-        state: absent
-        purge: true
-      when:
-        - inventory_hostname in groups['kube_masters'] or inventory_hostname in groups['worknodes']
-
-    - name: delete ingress config
+    - name: delete cluster config
       file:
         path: "{{ item }}"
         state: absent
-      with_items:
-      - /opt/config/helm.sh
-      - /opt/config/mandatory.yaml
-      - /opt/config/service-nodeport.yaml
-
-
-    - name: Purge kubeadm, kubelet, kubectl, and shared packages
-      apt:
-        name: "{{ item }}"
-        state: absent
-        purge: yes
-        force: yes
-      with_items:
-      - kubelet
-      - kubeadm
-      - kubectl
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - haproxy
+      loop:
+      - /opt/config

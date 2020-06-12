@@ -1,0 +1,19 @@
+---
+
+- name: Create kubeadm config directory
+  file:
+    path: /opt/config/kubeadm
+    state: directory
+  tags:
+    - kube_master
+    - first_masters
+    - prepare
+
+- name: Copy сonfig kubeadm-init.yaml
+  template:
+    src: kubeadm-init.yaml.j2
+    dest: /opt/config/kubeadm/kubeadm-init.yaml
+  tags:
+    - kube_master
+    - first_masters
+    - prepare

@@ -1,0 +1,10 @@
+---
+- include_tasks: prepare.yml
+  tags:
+    - kube_workers
+    - prepare
+
+- include_tasks: add.yml
+  tags:
+    - kube_workers
+    - add

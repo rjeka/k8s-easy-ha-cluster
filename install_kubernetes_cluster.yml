@@ -20,7 +20,7 @@
 
 # Installing Kubernetes
 - name: Installing shared packages Docker and Kubernetes for the masters and work nodes
-  hosts: [kube_masters, kube_workers, kube_ingress ]
+  hosts: [kube_masters, kube_workers, kube_ingress]
   become: yes
   become_method: sudo
 
@@ -66,28 +66,41 @@
         - etcd
         - ssl
 
-#Init First master
-- name: Init first master
+
+- name: Create masters
   hosts: [kube_masters]
   become: yes
   become_method: sudo
 
   tasks:
-    - name: install git
-      apt:
-        name: git
-      tags: first_master
-      when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
-
-    - name: Reset Old Cluster and del docker containers
+    - name: Reset Old Cluster
       shell: |
         kubeadm reset --force
-      tags: first_master
-      when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+      tags: kube_master
 
 
-    - name: Init First master {{ansible_hostname}}
+    - name: Init all masters
       include_role:
-        name: init_first_master
-      tags: first_master
-      when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+        name: kube_masters
+      tags:
+        - kube_masters
+        - first_masters
+        - other_masters
+
+
+
+- name: Crettae workers
+  hosts: [kube_workers, kube_ingress]
+  become: yes
+  become_method: sudo
+
+  tasks:
+    - name: Reset Old Cluster
+      shell: |
+        kubeadm reset --force
+      tags: kube_workers
+
+    - name: Init all workers
+      include_role:
+        name: kube_workers
+      tags: kube_workers

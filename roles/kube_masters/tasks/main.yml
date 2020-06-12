@@ -1,0 +1,23 @@
+---
+- include_tasks: prepare.yml
+  tags:
+    - kube_masters
+    - first_masters
+    - prepare
+
+- include_tasks: first_masters.yml
+  tags:
+    - kube_masters
+    - first_masters
+
+- include_tasks: other_masters.yml
+  tags:
+    - kube_masters
+    - other_masters
+
+
+- include_tasks: after_install.yml
+  tags:
+    - kube_masters
+    - first_masters
+    - other_masters

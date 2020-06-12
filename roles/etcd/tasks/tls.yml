@@ -82,19 +82,27 @@
 
 - name: Get file names to copy
   shell: |
-    find /opt/etcd-ssl -type f
+    ls -1
   register: files_to_copy
-  tags: ssl
+  args:
+    chdir: /opt/etcd-ssl
+  tags:
+    - ssl
+    - copy
+
 
 
 - name: Copy cert to ansiblehost
   fetch:
-    src: "{{ item }}"
+    src: "/opt/etcd-ssl/{{ item }}"
     dest: "/tmp/etcd/certs/{{ item }}"
+    flat: yes
   with_items:
     - "{{ files_to_copy.stdout_lines }}"
   when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
-  tags: ssl
+  tags:
+    - ssl
+    - copy
 
 
 - name: create ssl dir
@@ -104,11 +112,13 @@
   loop:
     - absent
     - directory
-  tags: ssl
+  tags:
+    - ssl
+
 
 - name: copy cert to etcd nodes
   copy:
-    src: "/tmp/etcd/certs/{{hostvars[groups['kube_masters'][0]]['ansible_hostname']}}/opt/etcd-ssl/{{ item }}"
+    src: "/tmp/etcd/certs/{{ item }}"
     dest: "/etc/ssl/etcd/{{ item }}"
   loop:
     - "ca.pem"
@@ -118,6 +128,9 @@
     - "{{ansible_hostname}}-peer-key.pem"
     - "client.pem"
     - "client-key.pem"
-  tags: ssl
+  tags:
+    - ssl
+    - copy
+
 
 
