@@ -27,7 +27,7 @@ vim hosts
 ```
 
 ```bash
-ansible-playbook -i <inventory> main.yaml
+ansible-playbook -i <inventory> install_kubernetes_cluster.yml
 ```
 
 
