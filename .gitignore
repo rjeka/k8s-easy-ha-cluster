@@ -1,4 +1,4 @@
 *.retry
 test.yaml
 habr.ini
-./idea
+.idea/
