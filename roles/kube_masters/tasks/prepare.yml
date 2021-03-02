@@ -5,15 +5,27 @@
     path: /opt/config/kubeadm
     state: directory
   tags:
-    - kube_master
-    - first_masters
+    - kube_masters
+    - first_master
     - prepare
+
+
+- name: Delete containerd config
+  file:
+    path: /etc/systemd/system/kubelet.service.d/0-cri-containerd.conf
+    state: absent
+  when: cri == "docker"
+  tags:
+    - kube_masters
+    - first_master
+    - prepare
+
 
 - name: Copy сonfig kubeadm-init.yaml
   template:
     src: kubeadm-init.yaml.j2
     dest: /opt/config/kubeadm/kubeadm-init.yaml
   tags:
-    - kube_master
-    - first_masters
+    - kube_masters
+    - first_master
     - prepare

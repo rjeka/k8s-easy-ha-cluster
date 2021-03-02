@@ -1,0 +1,63 @@
+---
+
+- name: create containerd.conf
+  template:
+    src: containerd.conf.j2
+    dest: /etc/modules-load.d/containerd.conf
+  tags: containerd
+
+- name: create kernel module
+  community.general.modprobe:
+    name: "{{ item }}"
+  loop:
+    - overlay
+    - br_netfilter
+  tags: containerd
+
+- name: set sysctl values
+  ansible.posix.sysctl:
+    name: "{{ item }}"
+    value: "1"
+  loop:
+    - net.bridge.bridge-nf-call-iptables
+    - net.ipv4.ip_forward
+    - net.bridge.bridge-nf-call-ip6tables
+  tags: containerd
+
+- name: Preinstall packages
+  apt:
+    name: ['apt-transport-https', 'ca-certificates', 'software-properties-common', 'curl']
+    update_cache: yes
+  tags: containerd
+
+- name: Add docker gpg key
+  apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+  tags: containerd
+
+- name:  Get docker repositorie
+  shell: |
+    echo "deb [arch=amd64] https://download.docker.com/linux/debian  $(lsb_release -cs) stable"
+  register: debString
+  tags: containerd
+
+
+- name: installcontainerd
+  apt:
+    name: containerd.io
+    update_cache: yes
+  tags: containerd
+
+- name: create config
+  file:
+    path: /etc/containerd
+    state: directory
+  tags: containerd
+
+- name: create default config
+  shell: |
+    containerd config default | sudo tee /etc/containerd/config.toml &&  crictl config runtime-endpoint unix:///var/run/containerd/containerd.sock
+  notify: restart containerd
+  tags: containerd
+

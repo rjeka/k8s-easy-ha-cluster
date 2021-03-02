@@ -17,7 +17,6 @@
 
 
 - hosts: [kube_masters]
-  remote_user: itadmin
   become: true
 
   tasks:

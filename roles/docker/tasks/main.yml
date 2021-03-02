@@ -19,7 +19,7 @@
 
 - name:  Get docker repositorie
   shell: |
-    echo "deb https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
+    echo "deb [arch=amd64] https://download.docker.com/linux/debian  $(lsb_release -cs) stable"
   register: debString
   tags: docker
 
@@ -38,7 +38,7 @@
 
 - name: Installing docker
   apt:
-    name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+    name: ['docker-ce={{ dockerVersion }}', 'docker-ce-cli={{ dockerVersion }}', 'containerd.io']
   tags: docker
 
 
@@ -49,3 +49,5 @@
     dest: /etc/docker/daemon.json
   notify: restart docker
   tags: docker
+  when: "'kube_workers' in group_names"
+

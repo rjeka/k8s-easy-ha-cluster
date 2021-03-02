@@ -13,7 +13,7 @@
 
 - name: Instal pre packages
   apt:
-    name: apt-transport-https
+    name: ['apt-transport-https', 'aptitude']
   tags: kubelet
 
 - name: Add kubernetes gpg key
@@ -29,19 +29,29 @@
   tags: kubelet
 
 
-- name: Installing kubeadm, kubelet, kubectl, and shared packages stable
+- name: Delete old packages
   apt:
-    name: ['kubelet', 'kubeadm', 'kubectl', 'unzip', 'tar', 'btrfs-tools', 'libseccomp2', 'socat', 'util-linux', 'curl', 'nfs-common', 'portmap', 'ceph-common', 'python-apt']
+    name: ['kubelet', 'kubeadm', 'kubectl']
     update_cache: yes
-  when: kubeVersion == "stable"
+    state: absent
+    autoremove: true
+    force: true
   tags: kubelet
 
 - name: Installing kubeadm, kubelet, kubectl, and shared packages with version
   apt:
-    name: ['kubelet={{kubeVersion}}-00', 'kubeadm={{kubeVersion}}-00', 'kubectl={{kubeVersion}}-00', 'unzip', 'tar', 'btrfs-tools', 'libseccomp2', 'socat', 'util-linux', 'curl', 'nfs-common', 'portmap', 'ceph-common', 'python-apt']
+    name: ['kubelet={{kubeVersion}}-00', 'kubeadm={{kubeVersion}}-00', 'kubectl={{kubeVersion}}-00']
     update_cache: yes
   when: kubeVersion != "stable"
   tags: kubelet
+
+- name: create kubeadm conf for kubelet
+  template:
+    src: cri-containerd.conf.j2
+    dest: /etc/systemd/system/kubelet.service.d/0-cri-containerd.conf
+  tags:
+    - containerd_config
+    - kubelet
 
 
 - name: Enable & start kubelet

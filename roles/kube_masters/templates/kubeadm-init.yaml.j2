@@ -3,22 +3,16 @@ apiVersion: kubeadm.k8s.io/v1beta2
 kind: InitConfiguration
 localAPIEndpoint:
   advertiseAddress: "{{ansible_host}}"
+nodeRegistration:
+  criSocket: "/run/containerd/containerd.sock"
 
 ---
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
-{% if kubeVersion != "stable" %}
 kubernetesVersion: "v{{ kubeVersion }}"
-{% endif %}
-{% if kubeVersion != "stable" %}
-kubernetesVersion: "stable"
-{% endif %}
 apiServer:
   certSANs:
   - "127.0.0.1"
-  - "{{ hostvars[groups['kube_masters'][0]]['ansible_hostname'] }}"
-  - "{{ hostvars[groups['kube_masters'][1]]['ansible_hostname'] }}"
-  - "{{ hostvars[groups['kube_masters'][2]]['ansible_hostname'] }}"
   - "{{ hostvars[groups['kube_masters'][0]]['ansible_host'] }}"
   - "{{ hostvars[groups['kube_masters'][1]]['ansible_host'] }}"
   - "{{ hostvars[groups['kube_masters'][2]]['ansible_host'] }}"

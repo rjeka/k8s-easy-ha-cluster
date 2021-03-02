@@ -39,6 +39,13 @@
       include_role:
         name: docker
       tags: docker
+      when: cri == "docker"
+
+    - name: inatsll containerd
+      include_role:
+        name: containerd
+      when: cri == "containerd"
+      tags: containerd
 
 
     - name: Install kubernetes
@@ -46,7 +53,9 @@
         name: "{{ item }}"
       with_items:
       - kubelet
-      tags: kubelet
+      tags:
+        - kubelet
+        - containerd_config
 
 
 
@@ -76,7 +85,7 @@
     - name: Reset Old Cluster
       shell: |
         kubeadm reset --force
-      tags: kube_master
+      tags: kube_masters
 
 
     - name: Init all masters
@@ -86,6 +95,7 @@
         - kube_masters
         - first_masters
         - other_masters
+        - prepare
 
 
 

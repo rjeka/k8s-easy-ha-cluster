@@ -2,13 +2,13 @@
 
 - name: Create master node
   shell: |
-    kubeadm init --config=kubeadm-init.yaml
+    kubeadm init --config=kubeadm-init.yaml --cri-socket  /run/containerd/containerd.sock
   args:
     chdir: /opt/config/kubeadm/
   when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
   tags:
-    - kube_master
-    - first_masters
+    - kube_masters
+    - first_master
 
 
 - name: Get file names to copy
@@ -19,8 +19,8 @@
   register: files_to_copy
   when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
   tags:
-    - kube_master
-    - first_masters
+    - kube_masters
+    - first_master
 
 - name: Copy cert to ansiblehost
   fetch:
@@ -31,6 +31,6 @@
     - "{{ files_to_copy.stdout_lines }}"
   when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
   tags:
-    - kube_master
-    - first_masters
+    - kube_masters
+    - first_master
 
