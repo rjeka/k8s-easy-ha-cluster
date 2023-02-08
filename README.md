@@ -1,10 +1,12 @@
-# Развертывание High Available Kubernetes кластера
+# Deploying a High Available Kubernetes Cluster
 
-Данный playbook разварачивает HA кластер Kubernetes. 
 
-## Последовательность развертывания:
+This playbook deploys a Kubernetes HA cluster.
+
+## What this playbook doing:
 - на машине, с которой запускается плейбук, создается временный каталог /tmp/k8s. Он понадобится для копирования сертификатов ETCD 
 и kubernetes после инициализации первого мастера. Также в него будет добавлена строка инициализации сгенерированная kubeadmin
+
 - на мастерах, рабочих нодах и нодах под ingress устанавливается kubelet, kubectl, kubeadm
 - на мастерах, рабочих нодах и нодах под ingress установливается CRI
 - на мастер нодах устанавливается ETCD. Настраивается ETCD кластер c TLS сертифкаты на мастерах в  /etc/ssl/etcd
