@@ -1,7 +1,7 @@
 # Deploying a High Available Kubernetes Cluster
 
 
-##The playbook deploys a highly available Kubernetes cluster by performing the following tasks:
+## The playbook deploys a highly available Kubernetes cluster by performing the following tasks:
 
 - Creating a temporary directory (/tmp/k8s) to store certificates
 - Installing kubelet, kubectl, and kubeadm on masters, workers, and ingress nodes
