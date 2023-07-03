@@ -1,42 +1,7 @@
 ---
-#Add directory for cert
-- name: Add tmp directory
-  hosts: localhost
-  gather_facts: no
-
-  tasks:
-    - name: create temp cert directory
-      file:
-        path: "{{ item }}"
-        state: directory
-        force: yes
-      loop:
-        - /tmp/k8s
-        - /tmp/etcd/certs/
-      tags:
-        - etcd
-        - ssl
-
-
-#Install the soft that is only needed on the masters
-- name: Install ETCD
-  hosts: [kube_masters]
-  become: yes
-  become_method: sudo
-
-  tasks:
-    - name: Install etcd
-      include_role:
-        name: "{{ item }}"
-      with_items:
-      - etcd
-      tags:
-        - etcd
-        - ssl
-
 # Install Kubernetes
 - name: Install containerd
-  hosts: [kube_masters, kube_workers, kube_ingress]
+  hosts: [kube_workers, kube_ingress]
   become: yes
   become_method: sudo
 
@@ -61,7 +26,7 @@
 
 # Install containerd
 - name: Install containerd
-  hosts: [kube_masters, kube_workers, kube_ingress]
+  hosts: [kube_workers, kube_ingress]
   become: yes
   become_method: sudo
 
@@ -71,29 +36,6 @@
         name: containerd
       tags:
         - containerd
-
-
-- name: Create masters
-  hosts: [kube_masters]
-  become: yes
-  become_method: sudo
-
-  tasks:
-    - name: Reset Old Cluster
-      shell: |
-        kubeadm reset --force
-      tags: kube_masters
-
-
-    - name: Init all masters
-      include_role:
-        name: kube_masters
-      tags:
-        - kube_masters
-        - first_masters
-        - other_masters
-        - prepare
-
 
 
 - name: Crettae workers

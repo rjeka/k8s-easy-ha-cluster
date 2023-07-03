@@ -79,6 +79,7 @@
     mode: 0755
     remote_src: True
   become: false
+  tags:
     - first_masters
     - kube_masters
     - other_masters
@@ -143,7 +144,7 @@
 
 - name: Install Calico
   shell: |
-    kubectl apply -f https://docs.projectcalico.org/v{{ calico_version }}/manifests/calico.yaml
+    kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico-typha.yaml
   tags:
     - first_masters
     - kube_masters

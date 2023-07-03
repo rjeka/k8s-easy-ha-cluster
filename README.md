@@ -21,7 +21,7 @@
 ```bash
 git clone https://github.com/rjeka/k8s-easy-ha-cluster.git
 cd k8s-easy-ha-cluster
-vim hosts
+vim hosts.ini
 ```
 
 ```bash

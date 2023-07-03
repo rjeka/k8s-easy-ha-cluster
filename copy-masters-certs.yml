@@ -1,0 +1,55 @@
+---
+- hosts: [kube_masters]
+  become: true
+
+  tasks:
+    - name: Copy cert to ansiblehost
+      fetch:
+        src: "/etc/kubernetes/pki/{{ item }}"
+        dest: "/tmp/k8s/{{ item }}"
+        flat: yes
+      with_items:
+        - apiserver-kubelet-client.crt
+        - apiserver-kubelet-client.key
+        - apiserver.crt
+        - apiserver.key
+        - ca.crt
+        - ca.key
+        - front-proxy-ca.crt
+        - front-proxy-ca.key
+        - front-proxy-client.crt
+        - front-proxy-client.key
+        - sa.key
+        - sa.pub
+      when: inventory_hostname == "{{ hostvars[groups['kube_masters'][0]]['inventory_hostname'] }}"
+      tags:
+        - kube_masters
+        - first_master
+
+    - name: stop kubelet
+      service:
+        name: kubelet
+        state: stopped
+
+
+    - name: copy kubernetes cert
+      copy:
+        src: /tmp/k8s/{{ item }}
+        dest: /etc/kubernetes/pki/{{ item }}
+      with_items:
+        - apiserver-kubelet-client.crt
+        - apiserver-kubelet-client.key
+        - apiserver.crt
+        - apiserver.key
+        - ca.crt
+        - ca.key
+        - front-proxy-ca.crt
+        - front-proxy-ca.key
+        - front-proxy-client.crt
+        - front-proxy-client.key
+        - sa.key
+        - sa.pub
+      tags:
+        - kube_masters
+        - other_masters
+      when: inventory_hostname != "{{ hostvars[groups['kube_masters'][0]]['inventory_hostname'] }}"

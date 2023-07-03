@@ -1,0 +1,9 @@
+- include_tasks: install.yml
+  tags:
+    - haproxy
+    - install
+
+- include_tasks: configs.yml
+  tags:
+    - haproxy
+    - configs

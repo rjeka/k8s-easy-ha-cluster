@@ -1,0 +1,11 @@
+---
+- name: add haproxy ppa repo
+  ansible.builtin.apt_repository:
+    repo: ppa:vbernat/haproxy-2.7
+  tags: haproxy  
+
+- name: install haproxy    
+  ansible.builtin.apt:
+    name: ["haproxy=2.7.9-1ppa1~jammy"]
+    update_cache: yes
+  tags: haproxy   

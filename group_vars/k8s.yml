@@ -1,7 +1,8 @@
 etcd_token: sthxidhv9vyxQ34cBrDQeYcS6x
-etcd_version: v3.3.22
+etcd_version: v3.5.7
 
+crictl_version: "v1.26.0"
 
-kubeVersion: 1.20.2
-CIDR: 10.43.0.0/16
-calico_version: 3.18
+kubeVersion: 1.27.2
+CIDR: 192.168.22.0/20
+calico_version: 3.26.0

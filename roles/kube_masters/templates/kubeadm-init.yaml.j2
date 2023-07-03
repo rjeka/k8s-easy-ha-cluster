@@ -1,21 +1,24 @@
 
-apiVersion: kubeadm.k8s.io/v1beta2
+apiVersion: kubeadm.k8s.io/v1beta3
 kind: InitConfiguration
 localAPIEndpoint:
   advertiseAddress: "{{ansible_host}}"
-nodeRegistration:
-  criSocket: "/run/containerd/containerd.sock"
+nodeRegistration:  
+  criSocket: unix:///run/containerd/containerd.sock
 
 ---
-apiVersion: kubeadm.k8s.io/v1beta2
+apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration
+imageRepository: "registry.k8s.io"
 kubernetesVersion: "v{{ kubeVersion }}"
+controlPlaneEndpoint: "{{ansible_host}}:6443"
 apiServer:
   certSANs:
   - "127.0.0.1"
   - "{{ hostvars[groups['kube_masters'][0]]['ansible_host'] }}"
   - "{{ hostvars[groups['kube_masters'][1]]['ansible_host'] }}"
   - "{{ hostvars[groups['kube_masters'][2]]['ansible_host'] }}"
+  timeoutForControlPlane: 4m0s
 etcd:
   external:
     endpoints:

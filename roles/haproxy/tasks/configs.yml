@@ -1,0 +1,24 @@
+---
+- name: create haproxy config
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+  tags: haproxy
+
+- name: restart haproxy
+  service: 
+    name: haproxy
+    state: restarted  
+  tags: haproxy  
+
+
+- name: changed kubelet configs
+  shell: |
+    sed -i 's/{{ hostvars[groups['kube_masters'][0]]['ansible_host'] }}/127.0.0.1/g'  /etc/kubernetes/kubelet.conf
+
+
+- name: restart kubelet
+  service: 
+    name: kubelet
+    state: restarted  
+  tags: haproxy  

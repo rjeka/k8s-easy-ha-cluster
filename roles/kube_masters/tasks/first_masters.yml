@@ -2,10 +2,10 @@
 
 - name: Create master node
   shell: |
-    kubeadm init --config=kubeadm-init.yaml --cri-socket  /run/containerd/containerd.sock
-  args:
+    kubeadm init --config=kubeadm-init.yaml
+  args:  
     chdir: /opt/config/kubeadm/
-  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname == "{{ hostvars[groups['kube_masters'][0]]['inventory_hostname'] }}"
   tags:
     - kube_masters
     - first_master
@@ -17,7 +17,7 @@
   args:
     chdir: /etc/kubernetes/pki
   register: files_to_copy
-  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname == "{{ hostvars[groups['kube_masters'][0]]['inventory_hostname'] }}"
   tags:
     - kube_masters
     - first_master
@@ -29,7 +29,7 @@
     flat: yes
   with_items:
     - "{{ files_to_copy.stdout_lines }}"
-  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname == "{{ hostvars[groups['kube_masters'][0]]['inventory_hostname'] }}"
   tags:
     - kube_masters
     - first_master

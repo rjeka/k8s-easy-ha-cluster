@@ -20,14 +20,14 @@
   tags:
     - kube_masters
     - other_masters
-  when: inventory_hostname != "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname != "{{ hostvars[groups['kube_masters'][0]]['inventory_hostname'] }}"
 
 - name: Create master node
   shell: |
-    kubeadm init --config=kubeadm-init.yaml --cri-socket  /run/containerd/containerd.sock
+    kubeadm init --config=kubeadm-init.yaml
   args:
     chdir: /opt/config/kubeadm/
-  when: inventory_hostname != "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname != "{{ hostvars[groups['kube_masters'][0]]['inventory_hostname'] }}"
   tags:
     - kube_masters
     - other_masters

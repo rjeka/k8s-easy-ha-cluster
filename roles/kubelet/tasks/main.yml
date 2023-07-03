@@ -10,8 +10,13 @@
   when: ansible_swaptotal_mb > 0
   tags: kubelet
 
+- name: create /etc/kubernetes/pki
+  file: 
+    path: /etc/kubernetes/pki
+    state: directory
+  tags: kubelet  
 
-- name: Instal pre packages
+- name: Install pre packages
   apt:
     name: ['apt-transport-https', 'aptitude']
   tags: kubelet
@@ -28,7 +33,6 @@
     state: present
   tags: kubelet
 
-
 - name: Delete old packages
   apt:
     name: ['kubelet', 'kubeadm', 'kubectl']
@@ -44,15 +48,6 @@
     update_cache: yes
   when: kubeVersion != "stable"
   tags: kubelet
-
-- name: create kubeadm conf for kubelet
-  template:
-    src: cri-containerd.conf.j2
-    dest: /etc/systemd/system/kubelet.service.d/0-cri-containerd.conf
-  tags:
-    - containerd_config
-    - kubelet
-
 
 - name: Enable & start kubelet
   systemd:
