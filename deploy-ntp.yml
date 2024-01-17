@@ -1,0 +1,16 @@
+
+- name: reset kubernetes  cluster
+  hosts: [kube_ingress, kube_workers]
+  become: yes
+  become_method: sudo
+  gather_facts: no
+
+
+  tasks:
+    - name: deploy ntp server
+      apt:
+        name: ntp
+        update_cache: true
+      become: true
+
+
