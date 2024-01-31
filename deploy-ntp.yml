@@ -7,10 +7,15 @@
 
 
   tasks:
-    - name: deploy ntp server
+    - name: deploy ntp and tzdata packages
       apt:
-        name: ntp
+        name: ['ntp', 'tzdata']
         update_cache: true
       become: true
 
+    - name: restart ntp service
+      ansible.builtin.systemd_service:
+        state: restarted
+        name: ntp
+      
 
