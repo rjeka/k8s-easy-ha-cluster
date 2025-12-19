@@ -68,13 +68,19 @@
     filename: kubernetes
   tags: kubelet
 
-- name: Delete old packages
+- name: Check if node is part of cluster
+  stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: kubelet_conf
+  tags: kubelet
+
+- name: Delete old packages (only if not active cluster node)
   apt:
     name: ['kubelet', 'kubeadm', 'kubectl']
     update_cache: yes
     state: absent
     autoremove: true
-    force: true
+  when: not kubelet_conf.stat.exists
   tags: kubelet
 
 - name: Installing kubeadm, kubelet, kubectl with version

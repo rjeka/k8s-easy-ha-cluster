@@ -34,11 +34,12 @@ defaults
 
 # Stats frontend for monitoring
 frontend stats
-    bind *:{{ haproxy_stats_port }}
+    bind 127.0.0.1:{{ haproxy_stats_port }}
     mode http
     stats enable
     stats uri {{ haproxy_stats_uri }}
     stats refresh {{ haproxy_stats_refresh }}
+    stats auth {{ haproxy_stats_user }}:{{ haproxy_stats_password }}
     stats show-legends
     stats show-node
 

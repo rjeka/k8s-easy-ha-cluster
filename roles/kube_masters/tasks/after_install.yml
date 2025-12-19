@@ -12,6 +12,7 @@
   file:
     path: /opt/config/token.txt
     state: touch
+    mode: '0600'
     force: yes
   when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
   tags:

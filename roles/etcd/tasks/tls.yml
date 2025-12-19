@@ -4,6 +4,14 @@
 # - https://mcs.mail.ru/blog/zapuskaem-etcd-klaster-dlya-kubernetes
 # - https://coreos.com/os/docs/latest/generate-self-signed-certificates.html
 
+- name: Clean up old certs on ansible controller
+  file:
+    path: /tmp/etcd/certs
+    state: absent
+  delegate_to: localhost
+  run_once: true
+  tags: ssl
+
 - name: Recreate etcd ssl working directory
   file:
     path: "{{ etcd_cert_work_dir }}"
