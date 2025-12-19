@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Ansible-based automation for deploying highly available Kubernetes clusters with external ETCD, HAProxy load balancing, and Calico CNI.
 
-**Stack:** Ansible, Kubernetes 1.27.2, ETCD v3.5.7, Containerd, HAProxy 2.7.9, Calico 3.26.0
+**Stack:** Ansible, Kubernetes 1.31.4, ETCD v3.5.20, Containerd 1.7.24, HAProxy 3.0.7, Calico 3.29.1
 
 ## Common Commands
 
@@ -76,7 +76,7 @@ ansible-playbook -i hosts.ini copy-masters-certs.yml
 
 | Role | Purpose |
 |------|---------|
-| `etcd` | 3-node ETCD cluster with TLS (peer + client auth) using CFSSL |
+| `etcd` | Dynamic ETCD cluster with TLS (peer + client auth) using CFSSL |
 | `containerd` | Container runtime with systemd cgroup driver |
 | `kubelet` | Kubernetes node agent, kubeadm, kubectl |
 | `kube_masters` | Master initialization, join token, Calico CNI deployment |
