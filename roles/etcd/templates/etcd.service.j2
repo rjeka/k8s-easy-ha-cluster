@@ -14,23 +14,22 @@ TimeoutStartSec=0
 
 ExecStart=/usr/local/bin/etcd \
   --name {{ ansible_hostname }} \
-  --data-dir /var/lib/etcd \
+  --data-dir {{ etcd_data_dir }} \
   --listen-client-urls https://{{ ansible_host }}:2379 \
   --advertise-client-urls https://{{ ansible_host }}:2379 \
-  --listen-peer-urls https://{{ ansible_host }}:2380 --initial-advertise-peer-urls https://{{ ansible_host }}:2380 \
-  --initial-cluster {{ hostvars[groups['kube_masters'][0]]['ansible_hostname'] }}=https://{{ hostvars[groups['kube_masters'][0]]['ansible_host'] }}:2380,{{ hostvars[groups['kube_masters'][1]]['ansible_hostname'] }}=https://{{ hostvars[groups['kube_masters'][1]]['ansible_host'] }}:2380,{{ hostvars[groups['kube_masters'][2]]['ansible_hostname'] }}=https://{{ hostvars[groups['kube_masters'][2]]['ansible_host'] }}:2380 \
+  --listen-peer-urls https://{{ ansible_host }}:2380 \
+  --initial-advertise-peer-urls https://{{ ansible_host }}:2380 \
+  --initial-cluster {% for host in groups['kube_masters'] %}{{ hostvars[host]['ansible_hostname'] }}=https://{{ hostvars[host]['ansible_host'] }}:2380{% if not loop.last %},{% endif %}{% endfor %} \
   --initial-cluster-token {{ etcd_token }} \
   --initial-cluster-state new \
   --client-cert-auth \
-  --trusted-ca-file /etc/ssl/etcd/ca.pem \
-  --cert-file /etc/ssl/etcd/{{ ansible_hostname }}.pem \
-  --key-file /etc/ssl/etcd/{{ ansible_hostname }}-key.pem \
+  --trusted-ca-file {{ etcd_ssl_dir }}/ca.pem \
+  --cert-file {{ etcd_ssl_dir }}/{{ ansible_hostname }}.pem \
+  --key-file {{ etcd_ssl_dir }}/{{ ansible_hostname }}-key.pem \
   --peer-client-cert-auth \
-  --peer-trusted-ca-file /etc/ssl/etcd/ca.pem \
-  --peer-cert-file /etc/ssl/etcd/{{ ansible_hostname }}-peer.pem \
-  --peer-key-file /etc/ssl/etcd/{{ ansible_hostname }}-peer-key.pem
-
-
+  --peer-trusted-ca-file {{ etcd_ssl_dir }}/ca.pem \
+  --peer-cert-file {{ etcd_ssl_dir }}/{{ ansible_hostname }}-peer.pem \
+  --peer-key-file {{ etcd_ssl_dir }}/{{ ansible_hostname }}-peer-key.pem
 
 [Install]
 WantedBy=multi-user.target

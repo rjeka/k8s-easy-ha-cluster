@@ -65,7 +65,7 @@
 - name: permissions for admin.conf
   file:
     path: /etc/kubernetes/admin.conf
-    mode: 0775
+    mode: 0600
   tags:
     - first_masters
     - kube_masters
@@ -76,7 +76,7 @@
   copy:
     src: /etc/kubernetes/admin.conf
     dest: "~/.kube/config"
-    mode: 0755
+    mode: 0600
     remote_src: True
   become: false
   tags:
@@ -97,7 +97,7 @@
 
 - name: Get kubeadm token
   shell: |
-    kubeadm token create --print-join-command --ttl=0
+    kubeadm token create --print-join-command --ttl={{ token_ttl | default('24h') }}
   register: kubeadmToken
   when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
   tags:

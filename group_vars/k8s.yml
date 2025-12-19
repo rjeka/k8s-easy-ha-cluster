@@ -1,8 +1,14 @@
+# ETCD Configuration
 etcd_token: sthxidhv9vyxQ34cBrDQeYcS6x
-etcd_version: v3.5.7
+etcd_version: v3.5.20
 
-crictl_version: "v1.26.0"
-
-kubeVersion: 1.27.2
+# Kubernetes Configuration
+kubeVersion: "1.31.4"
 CIDR: 192.168.22.0/20
-calico_version: 3.26.0
+
+# Component Versions
+calico_version: "3.29.1"
+crictl_version: "v1.31.1"
+containerd_version: "1.7.24"
+haproxy_version: "3.0.7"
+cfssl_version: "1.6.5"

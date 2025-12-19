@@ -1,0 +1,7 @@
+---
+# Calico CNI version
+calico_version: "3.29.1"
+
+# Kubernetes join token TTL (time to live)
+# Set to 24h for security - tokens should not be permanent
+token_ttl: "24h"

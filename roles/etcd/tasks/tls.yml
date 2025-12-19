@@ -1,113 +1,123 @@
 ---
-#https://mcs.mail.ru/blog/zapuskaem-etcd-klaster-dlya-kubernetes
-#https://coreos.com/os/docs/latest/generate-self-signed-certificates.html
+# ETCD TLS Certificate Generation
+# References:
+# - https://mcs.mail.ru/blog/zapuskaem-etcd-klaster-dlya-kubernetes
+# - https://coreos.com/os/docs/latest/generate-self-signed-certificates.html
 
-- name: recreate etcd ssl dir
+- name: Recreate etcd ssl working directory
   file:
-    path: /opt/etcd-ssl
+    path: "{{ etcd_cert_work_dir }}"
     state: "{{ item }}"
   loop:
     - absent
     - directory
   tags: ssl
 
-
-- name: install cfssl
+- name: Install cfssl tools
   get_url:
     url: "{{ item.url }}"
     dest: "{{ item.dest }}"
-    mode: a+x
+    mode: '0755'
   loop:
-    - { url: 'https://pkg.cfssl.org/R1.2/cfssl_linux-amd64', dest: '/usr/local/bin/cfssl' }
-    - { url: 'https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64', dest: '/usr/local/bin/cfssljson' }
+    - url: "https://github.com/cloudflare/cfssl/releases/download/v{{ cfssl_version }}/cfssl_{{ cfssl_version }}_linux_amd64"
+      dest: /usr/local/bin/cfssl
+    - url: "https://github.com/cloudflare/cfssl/releases/download/v{{ cfssl_version }}/cfssljson_{{ cfssl_version }}_linux_amd64"
+      dest: /usr/local/bin/cfssljson
   tags: ssl
-  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname == groups['kube_masters'][0]
 
-
-- name: create ca-config.json
+- name: Create ca-config.json
   template:
     src: ca-config.json.j2
-    dest: /opt/etcd-ssl/ca-config.json
+    dest: "{{ etcd_cert_work_dir }}/ca-config.json"
   tags: ssl
-  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname == groups['kube_masters'][0]
 
-- name: create ca-csr.json
+- name: Create ca-csr.json
   template:
     src: ca-csr.json.j2
-    dest: /opt/etcd-ssl/ca-csr.json
+    dest: "{{ etcd_cert_work_dir }}/ca-csr.json"
   tags: ssl
-  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname == groups['kube_masters'][0]
 
-
-- name: generating a new CA
+- name: Generate new CA certificate
   shell: |
     cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
   args:
-    chdir: /opt/etcd-ssl
+    chdir: "{{ etcd_cert_work_dir }}"
   tags: ssl
-  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname == groups['kube_masters'][0]
 
-- name: create server cert
+- name: Create server certificates for all masters
   shell: |
-    echo "{\"CN\":\"{{ item.hostname }}\",\"hosts\":[\"\"],\"key\":{\"algo\":\"rsa\",\"size\":2048}}" | cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server -hostname="{{ item.ip }},{{ item.hostname }}" - | cfssljson -bare {{ item.hostname }}
+    echo '{"CN":"{{ hostvars[item]['ansible_hostname'] }}","hosts":[""],"key":{"algo":"{{ etcd_cert_algo }}","size":{{ etcd_cert_size }}}}' | \
+    cfssl gencert \
+      -ca=ca.pem \
+      -ca-key=ca-key.pem \
+      -config=ca-config.json \
+      -profile=server \
+      -hostname="{{ hostvars[item]['ansible_host'] }},{{ hostvars[item]['ansible_hostname'] }}" - | \
+    cfssljson -bare {{ hostvars[item]['ansible_hostname'] }}
   args:
-    chdir: /opt/etcd-ssl
-  loop:
-    - { hostname: "{{hostvars[groups['kube_masters'][0]]['ansible_hostname']}}", ip: "{{hostvars[groups['kube_masters'][0]]['ansible_host']}}" }
-    - { hostname: "{{hostvars[groups['kube_masters'][1]]['ansible_hostname']}}", ip: "{{hostvars[groups['kube_masters'][1]]['ansible_host']}}" }
-    - { hostname: "{{hostvars[groups['kube_masters'][2]]['ansible_hostname']}}", ip: "{{hostvars[groups['kube_masters'][2]]['ansible_host']}}" }
+    chdir: "{{ etcd_cert_work_dir }}"
+  loop: "{{ groups['kube_masters'] }}"
   tags: ssl
-  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname == groups['kube_masters'][0]
 
-- name: create peer cert
+- name: Create peer certificates for all masters
   shell: |
-    echo "{\"CN\":\"{{ item.hostname }}\",\"hosts\":[\"\"],\"key\":{\"algo\":\"rsa\",\"size\":2048}}" | cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer -hostname="{{ item.ip }},{{ item.hostname }}" - | cfssljson -bare {{ item.hostname }}-peer
+    echo '{"CN":"{{ hostvars[item]['ansible_hostname'] }}","hosts":[""],"key":{"algo":"{{ etcd_cert_algo }}","size":{{ etcd_cert_size }}}}' | \
+    cfssl gencert \
+      -ca=ca.pem \
+      -ca-key=ca-key.pem \
+      -config=ca-config.json \
+      -profile=peer \
+      -hostname="{{ hostvars[item]['ansible_host'] }},{{ hostvars[item]['ansible_hostname'] }}" - | \
+    cfssljson -bare {{ hostvars[item]['ansible_hostname'] }}-peer
   args:
-    chdir: /opt/etcd-ssl
-  loop:
-    - { hostname: "{{hostvars[groups['kube_masters'][0]]['ansible_hostname']}}", ip: "{{hostvars[groups['kube_masters'][0]]['ansible_host']}}" }
-    - { hostname: "{{hostvars[groups['kube_masters'][1]]['ansible_hostname']}}", ip: "{{hostvars[groups['kube_masters'][1]]['ansible_host']}}" }
-    - { hostname: "{{hostvars[groups['kube_masters'][2]]['ansible_hostname']}}", ip: "{{hostvars[groups['kube_masters'][2]]['ansible_host']}}" }
+    chdir: "{{ etcd_cert_work_dir }}"
+  loop: "{{ groups['kube_masters'] }}"
   tags: ssl
-  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname == groups['kube_masters'][0]
 
-- name: create client certificate
+- name: Create client certificate
   shell: |
-    echo '{"CN":"client","key":{"algo":"rsa","size":2048}}' | cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client - | cfssljson -bare client
+    echo '{"CN":"client","key":{"algo":"{{ etcd_cert_algo }}","size":{{ etcd_cert_size }}}}' | \
+    cfssl gencert \
+      -ca=ca.pem \
+      -ca-key=ca-key.pem \
+      -config=ca-config.json \
+      -profile=client - | \
+    cfssljson -bare client
   args:
-    chdir: /opt/etcd-ssl
+    chdir: "{{ etcd_cert_work_dir }}"
   tags: ssl
-  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  when: inventory_hostname == groups['kube_masters'][0]
 
-
-- name: Get file names to copy
-  shell: |
-    ls -1
-  register: files_to_copy
-  args:
-    chdir: /opt/etcd-ssl
+- name: Get list of generated certificate files
+  find:
+    paths: "{{ etcd_cert_work_dir }}"
+    patterns: "*"
+  register: cert_files
+  when: inventory_hostname == groups['kube_masters'][0]
   tags:
     - ssl
     - copy
 
-
-
-- name: Copy cert to ansiblehost
+- name: Fetch certificates to ansible controller
   fetch:
-    src: "/opt/etcd-ssl/{{ item }}"
-    dest: "/tmp/etcd/certs/{{ item }}"
+    src: "{{ item.path }}"
+    dest: "/tmp/etcd/certs/{{ item.path | basename }}"
     flat: yes
-  with_items:
-    - "{{ files_to_copy.stdout_lines }}"
-  when: inventory_hostname == "{{hostvars[groups['kube_masters'][0]]['inventory_hostname']}}"
+  loop: "{{ cert_files.files }}"
+  when: inventory_hostname == groups['kube_masters'][0]
   tags:
     - ssl
     - copy
 
-
-- name: create ssl dir
+- name: Recreate etcd ssl directory on all masters
   file:
-    path: /etc/ssl/etcd
+    path: "{{ etcd_ssl_dir }}"
     state: "{{ item }}"
   loop:
     - absent
@@ -115,22 +125,19 @@
   tags:
     - ssl
 
-
-- name: copy cert to etcd nodes
+- name: Copy certificates to etcd nodes
   copy:
     src: "/tmp/etcd/certs/{{ item }}"
-    dest: "/etc/ssl/etcd/{{ item }}"
+    dest: "{{ etcd_ssl_dir }}/{{ item }}"
+    mode: '0600'
   loop:
     - "ca.pem"
-    - "{{ansible_hostname}}.pem"
-    - "{{ansible_hostname}}-key.pem"
-    - "{{ansible_hostname}}-peer.pem"
-    - "{{ansible_hostname}}-peer-key.pem"
+    - "{{ ansible_hostname }}.pem"
+    - "{{ ansible_hostname }}-key.pem"
+    - "{{ ansible_hostname }}-peer.pem"
+    - "{{ ansible_hostname }}-peer-key.pem"
     - "client.pem"
     - "client-key.pem"
   tags:
     - ssl
     - copy
-
-
-

@@ -1,16 +1,16 @@
 {
-  "CN": "crpt",
+  "CN": "etcd-ca",
   "key": {
-    "algo": "rsa",
-    "size": 2048
+    "algo": "{{ etcd_cert_algo }}",
+    "size": {{ etcd_cert_size }}
   },
   "names": [
-  {
-    "C": "RU",
-    "ST": "RU",
-    "L": "SPB",
-    "O": "k8s",
-    "OU": "System"
-  }
+    {
+      "C": "RU",
+      "ST": "RU",
+      "L": "SPB",
+      "O": "k8s",
+      "OU": "System"
+    }
   ]
 }

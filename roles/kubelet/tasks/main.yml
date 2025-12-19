@@ -11,26 +11,61 @@
   tags: kubelet
 
 - name: create /etc/kubernetes/pki
-  file: 
+  file:
     path: /etc/kubernetes/pki
     state: directory
-  tags: kubelet  
+  tags: kubelet
 
 - name: Install pre packages
   apt:
-    name: ['apt-transport-https', 'aptitude']
+    name: ['apt-transport-https', 'aptitude', 'ca-certificates', 'curl', 'gnupg']
   tags: kubelet
 
-- name: Add kubernetes gpg key
-  apt_key:
-    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-    state: present
+- name: Create /etc/apt/keyrings directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
   tags: kubelet
 
-- name: Add kubernetes repositorie
+- name: Remove old kubernetes apt key (if exists)
+  file:
+    path: /etc/apt/trusted.gpg.d/kubernetes.gpg
+    state: absent
+  ignore_errors: yes
+  tags: kubelet
+
+- name: Remove old kubernetes repository (if exists)
   apt_repository:
     repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+    state: absent
+  ignore_errors: yes
+  tags: kubelet
+
+- name: Download Kubernetes GPG key
+  get_url:
+    url: https://pkgs.k8s.io/core:/stable:/v{{ kubeVersion | regex_replace('^([0-9]+\\.[0-9]+).*', '\\1') }}/deb/Release.key
+    dest: /tmp/kubernetes-release.key
+    mode: '0644'
+  tags: kubelet
+
+- name: Dearmor and install Kubernetes GPG key
+  shell: gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg < /tmp/kubernetes-release.key
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  tags: kubelet
+
+- name: Set permissions on keyring
+  file:
+    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    mode: '0644'
+  tags: kubelet
+
+- name: Add Kubernetes repository (pkgs.k8s.io)
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubeVersion | regex_replace('^([0-9]+\\.[0-9]+).*', '\\1') }}/deb/ /"
     state: present
+    filename: kubernetes
   tags: kubelet
 
 - name: Delete old packages
@@ -42,11 +77,33 @@
     force: true
   tags: kubelet
 
-- name: Installing kubeadm, kubelet, kubectl, and shared packages with version
+- name: Installing kubeadm, kubelet, kubectl with version
   apt:
-    name: ['kubelet={{kubeVersion}}-00', 'kubeadm={{kubeVersion}}-00', 'kubectl={{kubeVersion}}-00']
+    name:
+      - "kubelet={{ kubeVersion }}-*"
+      - "kubeadm={{ kubeVersion }}-*"
+      - "kubectl={{ kubeVersion }}-*"
     update_cache: yes
+    allow_downgrade: yes
   when: kubeVersion != "stable"
+  tags: kubelet
+
+- name: Hold kubelet package
+  dpkg_selections:
+    name: kubelet
+    selection: hold
+  tags: kubelet
+
+- name: Hold kubeadm package
+  dpkg_selections:
+    name: kubeadm
+    selection: hold
+  tags: kubelet
+
+- name: Hold kubectl package
+  dpkg_selections:
+    name: kubectl
+    selection: hold
   tags: kubelet
 
 - name: Enable & start kubelet

@@ -1,36 +1,50 @@
-- name: Create dirs
+---
+- name: Create archive directory
   file:
     path: /opt/archives
     state: directory
   tags: etcd
 
-
-- name: Get etcd archive
+- name: Download etcd archive
   get_url:
-    url: https://github.com/coreos/etcd/releases/download/{{etcd_version}}/etcd-{{etcd_version}}-linux-amd64.tar.gz
-    dest: /opt/archives/etcd-{{etcd_version}}-linux-amd64.tar.gz
+    url: "https://github.com/coreos/etcd/releases/download/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+    dest: "/opt/archives/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
   tags: etcd
 
-- name: Get and unpack etcd
-  shell: |
-    tar -xvf etcd-{{etcd_version}}-linux-amd64.tar.gz -C /usr/local/bin/ --strip-components=1
-  args:
-    chdir: /opt/archives
+- name: Extract etcd binaries
+  unarchive:
+    src: "/opt/archives/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+    dest: /usr/local/bin/
+    remote_src: yes
+    extra_opts:
+      - --strip-components=1
+    creates: /usr/local/bin/etcd
+  tags: etcd
+
+- name: Create etcd data directory
+  file:
+    path: "{{ etcd_data_dir }}"
+    state: directory
+    mode: '0700'
   tags: etcd
 
 - name: Create systemd service for etcd
   template:
     src: etcd.service.j2
-    dest: "/etc/systemd/system/etcd.service"
+    dest: /etc/systemd/system/etcd.service
+    mode: '0644'
+  notify: restart etcd
   tags: etcd
 
-- name: Create etcd env file
+- name: Create etcd environment file
   template:
     src: etcd.env.j2
     dest: /etc/etcd.env
+    mode: '0644'
+  notify: restart etcd
   tags: etcd
 
-- name: Enable and start etc cluster
+- name: Enable and start etcd cluster
   systemd:
     name: etcd
     state: started
