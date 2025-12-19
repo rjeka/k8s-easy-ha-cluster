@@ -39,9 +39,17 @@ ansible-playbook -i hosts.ini install_kubernetes_cluster.yml
 | `deploy-ntp.yml` | Configure NTP |
 | `copy-masters-certs.yml` | Distribute master certificates |
 
+## Installation
+
+Full cluster (all components):
+
+```bash
+ansible-playbook -i hosts.ini install_kubernetes_cluster.yml
+```
+
 ## Tags
 
-Run specific components:
+Run specific components only:
 
 ```bash
 ansible-playbook -i hosts.ini install_kubernetes_cluster.yml -t etcd
