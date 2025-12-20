@@ -1,0 +1,22 @@
+---
+# ETCD version
+etcd_version: "v3.5.20"
+
+# ETCD data directory
+etcd_data_dir: "/var/lib/etcd"
+
+# ETCD SSL directory
+etcd_ssl_dir: "/etc/ssl/etcd"
+
+# ETCD working directory for certificate generation
+etcd_cert_work_dir: "/opt/etcd-ssl"
+
+# CFSSL version for certificate generation
+cfssl_version: "1.6.5"
+
+# ETCD cluster token (override in group_vars)
+etcd_token: "etcd-cluster-token"
+
+# Certificate algorithm (ecdsa is more secure and faster than rsa)
+etcd_cert_algo: "ecdsa"
+etcd_cert_size: 256

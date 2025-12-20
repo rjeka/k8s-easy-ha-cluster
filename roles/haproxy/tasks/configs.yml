@@ -1,24 +1,30 @@
 ---
-- name: create haproxy config
-  template:
+- name: Create HAProxy configuration
+  ansible.builtin.template:
     src: haproxy.cfg.j2
     dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: '0644'
+    validate: haproxy -c -f %s
+  notify: reload haproxy
   tags: haproxy
 
-- name: restart haproxy
-  service: 
-    name: haproxy
-    state: restarted  
-  tags: haproxy  
+- name: Check if kubelet.conf exists
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: kubelet_conf_stat
+  tags: haproxy
 
+- name: Update kubelet.conf server address to localhost
+  ansible.builtin.replace:
+    path: /etc/kubernetes/kubelet.conf
+    regexp: 'server: https://{{ hostvars[groups["kube_masters"][0]]["ansible_host"] }}:6443'
+    replace: 'server: https://127.0.0.1:6443'
+  notify: restart kubelet
+  tags: haproxy
+  when: kubelet_conf_stat.stat.exists
 
-- name: changed kubelet configs
-  shell: |
-    sed -i 's/{{ hostvars[groups['kube_masters'][0]]['ansible_host'] }}/127.0.0.1/g'  /etc/kubernetes/kubelet.conf
-
-
-- name: restart kubelet
-  service: 
-    name: kubelet
-    state: restarted  
-  tags: haproxy  
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+  tags: haproxy

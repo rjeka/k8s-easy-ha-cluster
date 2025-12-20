@@ -1,73 +1,138 @@
 ---
-- name: deploy crictl {{ crictl_version }}
-
-
-  unarchive:
-    src: "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-linux-amd64.tar.gz"
-    dest: "/usr/local/bin"
-    remote_src: yes
-  tags: containerd  
-
-- name: create containerd.conf
-  template:
-    src: containerd.conf.j2
-    dest: /etc/modules-load.d/containerd.conf
+- name: Validate supported architecture
+  ansible.builtin.fail:
+    msg: "Unsupported architecture: {{ ansible_architecture }}. Supported: x86_64, aarch64"
+  when: ansible_architecture not in containerd_arch_map
   tags: containerd
 
-- name: create kernel module
+- name: Deploy crictl {{ crictl_version }}
+  ansible.builtin.unarchive:
+    src: "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-linux-{{ containerd_arch_map[ansible_architecture] | default('amd64') }}.tar.gz"
+    dest: "/usr/local/bin"
+    remote_src: yes
+  tags: containerd
+
+- name: Create containerd kernel modules config
+  ansible.builtin.template:
+    src: containerd.conf.j2
+    dest: /etc/modules-load.d/containerd.conf
+    mode: '0644'
+  tags: containerd
+
+- name: Load required kernel modules
   community.general.modprobe:
     name: "{{ item }}"
+    persistent: present
   loop:
     - overlay
     - br_netfilter
   tags: containerd
 
-- name: set sysctl values
+- name: Configure sysctl parameters for Kubernetes
   ansible.posix.sysctl:
     name: "{{ item }}"
     value: "1"
+    sysctl_file: /etc/sysctl.d/99-kubernetes-cri.conf
+    reload: yes
   loop:
     - net.bridge.bridge-nf-call-iptables
     - net.ipv4.ip_forward
     - net.bridge.bridge-nf-call-ip6tables
   tags: containerd
 
-- name: Preinstall packages
-  apt:
-    name: ['apt-transport-https', 'ca-certificates', 'software-properties-common', 'curl']
-    update_cache: yes
-  tags: containerd
-
-- name: Add docker gpg key
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
-  tags: containerd
-
-- name:  Get docker repositorie
-  ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-    state: present
-  tags: containerd  
-
-- name: install containerd
+- name: Install prerequisite packages
   ansible.builtin.apt:
-    name: containerd.io 
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - software-properties-common
+      - curl
+      - gnupg
     update_cache: yes
   tags: containerd
 
-- name: create config
-  file:
-    path: /etc/containerd
+- name: Create keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
     state: directory
+    mode: '0755'
   tags: containerd
 
+- name: Download Docker GPG key
+  ansible.builtin.get_url:
+    url: "{{ docker_gpg_key_url }}"
+    dest: /tmp/docker.gpg.armored
+    mode: '0644'
+  tags: containerd
 
-- name: create default config
-  shell: |
-    containerd config default | sudo tee /etc/containerd/config.toml && crictl config runtime-endpoint unix:///var/run/containerd/containerd.sock && \
-    sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml && \
-    PAUSE_IMAGE=$(kubeadm config images list | grep pause) && \
-    sed -i "s,sandbox_image = .*,sandbox_image = \"$PAUSE_IMAGE\",g" /etc/containerd/config.toml
+- name: Dearmor Docker GPG key
+  ansible.builtin.shell: |
+    gpg --dearmor < /tmp/docker.gpg.armored > {{ docker_gpg_keyring_path }}
+  args:
+    creates: "{{ docker_gpg_keyring_path }}"
+  tags: containerd
+
+- name: Set permissions on Docker GPG keyring
+  ansible.builtin.file:
+    path: "{{ docker_gpg_keyring_path }}"
+    mode: '0644'
+  tags: containerd
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ containerd_arch_map[ansible_architecture] | default('amd64') }} signed-by={{ docker_gpg_keyring_path }}] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker
+  tags: containerd
+
+- name: Install containerd {{ containerd_version }}
+  ansible.builtin.apt:
+    name: "containerd.io={{ containerd_version }}-1"
+    update_cache: yes
+    allow_downgrade: yes
+  tags: containerd
+
+- name: Hold containerd package version
+  ansible.builtin.dpkg_selections:
+    name: containerd.io
+    selection: hold
+  tags: containerd
+
+- name: Create containerd config directory
+  ansible.builtin.file:
+    path: "{{ containerd_config_dir }}"
+    state: directory
+    mode: '0755'
+  tags: containerd
+
+- name: Deploy containerd configuration
+  ansible.builtin.template:
+    src: config.toml.j2
+    dest: "{{ containerd_config_dir }}/config.toml"
+    mode: '0644'
+    backup: yes
   notify: restart containerd
+  tags: containerd
+
+- name: Configure crictl runtime endpoint
+  ansible.builtin.copy:
+    dest: /etc/crictl.yaml
+    content: |
+      runtime-endpoint: unix:///var/run/containerd/containerd.sock
+      image-endpoint: unix:///var/run/containerd/containerd.sock
+      timeout: 10
+    mode: '0644'
+  tags: containerd
+
+- name: Ensure containerd is started and enabled
+  ansible.builtin.service:
+    name: containerd
+    state: started
+    enabled: yes
+  tags: containerd
+
+- name: Clean up temporary GPG key file
+  ansible.builtin.file:
+    path: /tmp/docker.gpg.armored
+    state: absent
   tags: containerd

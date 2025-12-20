@@ -1,0 +1,7 @@
+---
+haproxy_version: "3.0"
+haproxy_stats_port: 8404
+haproxy_stats_uri: /stats
+haproxy_stats_refresh: 10s
+haproxy_stats_user: admin
+haproxy_stats_password: changeme

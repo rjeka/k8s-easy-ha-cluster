@@ -1,10 +1,18 @@
 ---
 
-- name: add worker to cluster
-  shell: |
-    cat token.txt | bash
-  args:
-    chdir: /opt/config/kubeadm
+- name: Read join command from token file
+  slurp:
+    src: /opt/config/kubeadm/token.txt
+  register: join_command_encoded
+  tags:
+    - kube_workers
+    - add
+
+- name: Join worker to cluster
+  command: "{{ join_command_encoded.content | b64decode | trim }}"
+  register: join_result
+  changed_when: "'This node has joined the cluster' in join_result.stdout"
+  failed_when: join_result.rc != 0 and 'already exists' not in join_result.stderr
   tags:
     - kube_workers
     - add

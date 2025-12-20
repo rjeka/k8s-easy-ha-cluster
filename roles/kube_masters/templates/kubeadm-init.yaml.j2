@@ -1,9 +1,8 @@
-
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: InitConfiguration
 localAPIEndpoint:
   advertiseAddress: "{{ansible_host}}"
-nodeRegistration:  
+nodeRegistration:
   criSocket: unix:///run/containerd/containerd.sock
 
 ---
@@ -15,19 +14,18 @@ controlPlaneEndpoint: "{{ansible_host}}:6443"
 apiServer:
   certSANs:
   - "127.0.0.1"
-  - "{{ hostvars[groups['kube_masters'][0]]['ansible_host'] }}"
-  - "{{ hostvars[groups['kube_masters'][1]]['ansible_host'] }}"
-  - "{{ hostvars[groups['kube_masters'][2]]['ansible_host'] }}"
+{% for host in groups['kube_masters'] %}
+  - "{{ hostvars[host]['ansible_host'] }}"
+{% endfor %}
   timeoutForControlPlane: 4m0s
 etcd:
   external:
     endpoints:
-    - "https://{{ hostvars[groups['kube_masters'][0]]['ansible_host'] }}:2379"
-    - "https://{{ hostvars[groups['kube_masters'][1]]['ansible_host'] }}:2379"
-    - "https://{{ hostvars[groups['kube_masters'][2]]['ansible_host'] }}:2379"
+{% for host in groups['kube_masters'] %}
+    - "https://{{ hostvars[host]['ansible_host'] }}:2379"
+{% endfor %}
     caFile: /etc/ssl/etcd/ca.pem
     certFile: /etc/ssl/etcd/client.pem
     keyFile: /etc/ssl/etcd/client-key.pem
 networking:
   podSubnet: "{{ CIDR }}"
-

@@ -1,11 +1,46 @@
 ---
-- name: add haproxy ppa repo
-  ansible.builtin.apt_repository:
-    repo: ppa:vbernat/haproxy-2.7
-  tags: haproxy  
-
-- name: install haproxy    
+- name: Install required packages for HAProxy repository
   ansible.builtin.apt:
-    name: ["haproxy=2.7.9-1ppa1~jammy"]
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
     update_cache: yes
-  tags: haproxy   
+  tags: haproxy
+
+- name: Create keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  tags: haproxy
+
+- name: Download HAProxy GPG key
+  ansible.builtin.get_url:
+    url: https://haproxy.debian.net/bernat.debian.org.gpg
+    dest: /etc/apt/keyrings/haproxy.gpg
+    mode: '0644'
+  tags: haproxy
+
+- name: Add HAProxy official repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/haproxy.gpg] https://haproxy.debian.net {{ ansible_distribution_release }}-backports-{{ haproxy_version }} main"
+    filename: haproxy
+    state: present
+  tags: haproxy
+
+- name: Install HAProxy
+  ansible.builtin.apt:
+    name: haproxy
+    state: present
+    update_cache: yes
+  tags: haproxy
+
+- name: Enable and start HAProxy service
+  ansible.builtin.systemd:
+    name: haproxy
+    enabled: yes
+    state: started
+  tags: haproxy
