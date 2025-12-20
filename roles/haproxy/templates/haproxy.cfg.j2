@@ -54,7 +54,7 @@ frontend k8s-api
 # Kubernetes API Server backend
 backend k8s-api
     mode tcp
-    option tcp-check
+    option ssl-hello-chk
     balance roundrobin
     default-server port 6443 inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
 {% for host in groups['kube_masters'] %}

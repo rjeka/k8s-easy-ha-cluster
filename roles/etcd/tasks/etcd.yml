@@ -51,3 +51,25 @@
     enabled: yes
     daemon_reload: yes
   tags: etcd
+
+- name: Wait for etcd to be ready
+  wait_for:
+    port: 2379
+    host: "{{ ansible_host }}"
+    delay: 5
+    timeout: 60
+  tags: etcd
+
+- name: Verify etcd cluster health
+  shell: |
+    etcdctl endpoint health \
+      --endpoints=https://{{ ansible_host }}:2379 \
+      --cacert={{ etcd_ssl_dir }}/ca.pem \
+      --cert={{ etcd_ssl_dir }}/client.pem \
+      --key={{ etcd_ssl_dir }}/client-key.pem
+  register: etcd_health
+  retries: 5
+  delay: 10
+  until: etcd_health.rc == 0
+  changed_when: false
+  tags: etcd

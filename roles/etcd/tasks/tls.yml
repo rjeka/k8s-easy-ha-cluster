@@ -4,21 +4,26 @@
 # - https://mcs.mail.ru/blog/zapuskaem-etcd-klaster-dlya-kubernetes
 # - https://coreos.com/os/docs/latest/generate-self-signed-certificates.html
 
+- name: Check if CA certificate already exists
+  stat:
+    path: "{{ etcd_ssl_dir }}/ca.pem"
+  register: etcd_ca_exists
+  tags: ssl
+
 - name: Clean up old certs on ansible controller
   file:
     path: /tmp/etcd/certs
     state: absent
   delegate_to: localhost
   run_once: true
+  when: not etcd_ca_exists.stat.exists
   tags: ssl
 
-- name: Recreate etcd ssl working directory
+- name: Create etcd ssl working directory
   file:
     path: "{{ etcd_cert_work_dir }}"
-    state: "{{ item }}"
-  loop:
-    - absent
-    - directory
+    state: directory
+  when: not etcd_ca_exists.stat.exists
   tags: ssl
 
 - name: Install cfssl tools
@@ -32,21 +37,27 @@
     - url: "https://github.com/cloudflare/cfssl/releases/download/v{{ cfssl_version }}/cfssljson_{{ cfssl_version }}_linux_amd64"
       dest: /usr/local/bin/cfssljson
   tags: ssl
-  when: inventory_hostname == groups['kube_masters'][0]
+  when:
+    - inventory_hostname == groups['kube_masters'][0]
+    - not etcd_ca_exists.stat.exists
 
 - name: Create ca-config.json
   template:
     src: ca-config.json.j2
     dest: "{{ etcd_cert_work_dir }}/ca-config.json"
   tags: ssl
-  when: inventory_hostname == groups['kube_masters'][0]
+  when:
+    - inventory_hostname == groups['kube_masters'][0]
+    - not etcd_ca_exists.stat.exists
 
 - name: Create ca-csr.json
   template:
     src: ca-csr.json.j2
     dest: "{{ etcd_cert_work_dir }}/ca-csr.json"
   tags: ssl
-  when: inventory_hostname == groups['kube_masters'][0]
+  when:
+    - inventory_hostname == groups['kube_masters'][0]
+    - not etcd_ca_exists.stat.exists
 
 - name: Generate new CA certificate
   shell: |
@@ -54,7 +65,9 @@
   args:
     chdir: "{{ etcd_cert_work_dir }}"
   tags: ssl
-  when: inventory_hostname == groups['kube_masters'][0]
+  when:
+    - inventory_hostname == groups['kube_masters'][0]
+    - not etcd_ca_exists.stat.exists
 
 - name: Create server certificates for all masters
   shell: |
@@ -70,7 +83,9 @@
     chdir: "{{ etcd_cert_work_dir }}"
   loop: "{{ groups['kube_masters'] }}"
   tags: ssl
-  when: inventory_hostname == groups['kube_masters'][0]
+  when:
+    - inventory_hostname == groups['kube_masters'][0]
+    - not etcd_ca_exists.stat.exists
 
 - name: Create peer certificates for all masters
   shell: |
@@ -86,7 +101,9 @@
     chdir: "{{ etcd_cert_work_dir }}"
   loop: "{{ groups['kube_masters'] }}"
   tags: ssl
-  when: inventory_hostname == groups['kube_masters'][0]
+  when:
+    - inventory_hostname == groups['kube_masters'][0]
+    - not etcd_ca_exists.stat.exists
 
 - name: Create client certificate
   shell: |
@@ -100,14 +117,18 @@
   args:
     chdir: "{{ etcd_cert_work_dir }}"
   tags: ssl
-  when: inventory_hostname == groups['kube_masters'][0]
+  when:
+    - inventory_hostname == groups['kube_masters'][0]
+    - not etcd_ca_exists.stat.exists
 
 - name: Get list of generated certificate files
   find:
     paths: "{{ etcd_cert_work_dir }}"
     patterns: "*"
   register: cert_files
-  when: inventory_hostname == groups['kube_masters'][0]
+  when:
+    - inventory_hostname == groups['kube_masters'][0]
+    - not etcd_ca_exists.stat.exists
   tags:
     - ssl
     - copy
@@ -117,19 +138,20 @@
     src: "{{ item.path }}"
     dest: "/tmp/etcd/certs/{{ item.path | basename }}"
     flat: yes
-  loop: "{{ cert_files.files }}"
-  when: inventory_hostname == groups['kube_masters'][0]
+  loop: "{{ cert_files.files | default([]) }}"
+  when:
+    - inventory_hostname == groups['kube_masters'][0]
+    - not etcd_ca_exists.stat.exists
   tags:
     - ssl
     - copy
 
-- name: Recreate etcd ssl directory on all masters
+- name: Create etcd ssl directory on all masters
   file:
     path: "{{ etcd_ssl_dir }}"
-    state: "{{ item }}"
-  loop:
-    - absent
-    - directory
+    state: directory
+    mode: '0700'
+  when: not etcd_ca_exists.stat.exists
   tags:
     - ssl
 
@@ -146,6 +168,7 @@
     - "{{ ansible_hostname }}-peer-key.pem"
     - "client.pem"
     - "client-key.pem"
+  when: not etcd_ca_exists.stat.exists
   tags:
     - ssl
     - copy

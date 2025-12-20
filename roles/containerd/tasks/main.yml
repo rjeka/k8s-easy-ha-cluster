@@ -1,4 +1,10 @@
 ---
+- name: Validate supported architecture
+  ansible.builtin.fail:
+    msg: "Unsupported architecture: {{ ansible_architecture }}. Supported: x86_64, aarch64"
+  when: ansible_architecture not in containerd_arch_map
+  tags: containerd
+
 - name: Deploy crictl {{ crictl_version }}
   ansible.builtin.unarchive:
     src: "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-linux-{{ containerd_arch_map[ansible_architecture] | default('amd64') }}.tar.gz"
@@ -81,7 +87,7 @@
 
 - name: Install containerd {{ containerd_version }}
   ansible.builtin.apt:
-    name: "containerd.io={{ containerd_version }}*"
+    name: "containerd.io={{ containerd_version }}-1"
     update_cache: yes
     allow_downgrade: yes
   tags: containerd
