@@ -1,0 +1,30 @@
+---
+- name: Install python3-debian for deb822_repository
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+
+- name: Add Kubernetes apt repository
+  ansible.builtin.deb822_repository:
+    name: kubernetes
+    uris: "{{ kubeadm_repo_url }}"
+    suites: /
+    signed_by: "{{ kubeadm_repo_url }}Release.key"
+
+- name: Install Kubernetes packages
+  ansible.builtin.apt:
+    name: "{{ kubeadm_packages | map('regex_replace', '$', '=' ~ k8s_version ~ '-*') | list + kubeadm_extra_packages }}"
+    state: present
+    update_cache: true
+    allow_change_held_packages: true
+
+- name: Hold Kubernetes packages
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop: "{{ kubeadm_packages }}"
+
+- name: Enable kubelet
+  ansible.builtin.systemd_service:
+    name: kubelet
+    enabled: true

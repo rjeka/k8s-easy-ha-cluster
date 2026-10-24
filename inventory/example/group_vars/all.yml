@@ -1,6 +1,7 @@
 ---
-# Kubernetes minor version; packages come from pkgs.k8s.io/core:/stable:/v<minor>
-k8s_version: "1.37"
+# Kubernetes version (pinned and held); packages come from
+# pkgs.k8s.io/core:/stable:/v<minor>
+k8s_version: "1.37.1"
 k8s_cluster_name: kubernetes
 
 # Control plane endpoint. kube-vip announces this address via ARP on the

@@ -25,3 +25,4 @@
   roles:
     - common
     - containerd
+    - kubeadm

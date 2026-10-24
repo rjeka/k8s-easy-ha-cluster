@@ -21,7 +21,7 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
 2. [x] Skeleton: ansible.cfg, inventory/example, group_vars, preflight in site.yml
 3. [x] Role `common`: swap off, kernel modules, sysctl, time sync
 4. [x] Role `containerd`
-5. [ ] Role `kubeadm`: packages, hold
+5. [x] Role `kubeadm`: packages, hold
 6. [ ] Role `kube_vip`
 7. [ ] Role `control_plane`: init first node, join the rest
 8. [ ] Role `workers`: join
