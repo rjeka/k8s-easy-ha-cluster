@@ -19,3 +19,8 @@
         fail_msg: >-
           control_plane needs an odd number of hosts and k8s_vip must be a
           valid address that is not used by any node
+
+- name: Prepare nodes
+  hosts: k8s_cluster
+  roles:
+    - common

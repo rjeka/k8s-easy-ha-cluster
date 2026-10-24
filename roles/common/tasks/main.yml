@@ -1,0 +1,63 @@
+---
+- name: Check supported OS
+  ansible.builtin.assert:
+    that:
+      - (ansible_facts.distribution == 'Ubuntu' and ansible_facts.distribution_version in ['22.04', '24.04'])
+        or (ansible_facts.distribution == 'Debian' and ansible_facts.distribution_major_version == '12')
+      - ansible_facts.architecture in ['x86_64', 'aarch64']
+    fail_msg: "Supported: Ubuntu 22.04/24.04, Debian 12 on amd64 or arm64"
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name: "{{ common_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Disable swap now
+  ansible.builtin.command: swapoff -a
+  when: ansible_facts.swaptotal_mb | int > 0
+  changed_when: true
+
+- name: Disable swap in fstab
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#\s]+\s+\S+\s+swap\s+.*)$'
+    replace: '# \1'
+
+- name: Load kernel modules on boot
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: "{{ common_kernel_modules | join('\n') }}\n"
+    mode: "0644"
+
+- name: Load kernel modules now
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ common_kernel_modules }}"
+
+- name: Set sysctl parameters
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-k8s.conf
+    reload: true
+  loop: "{{ common_sysctl | dict2items }}"
+
+- name: Configure chrony servers
+  ansible.builtin.copy:
+    dest: /etc/chrony/conf.d/k8s.conf
+    content: |
+      {% for server in common_ntp_servers %}
+      server {{ server }} iburst
+      {% endfor %}
+    mode: "0644"
+  when: common_ntp_servers | length > 0
+  notify: Restart chrony
+
+- name: Enable chrony
+  ansible.builtin.service:
+    name: chrony
+    state: started
+    enabled: true
