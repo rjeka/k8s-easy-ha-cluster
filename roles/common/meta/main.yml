@@ -1,6 +1,7 @@
 ---
 galaxy_info:
   role_name: common
+  author: rjeka
   description: Node prerequisites for kubeadm
   license: MIT
   min_ansible_version: "2.16"
