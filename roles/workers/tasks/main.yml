@@ -27,6 +27,7 @@
         src: "{{ role_path }}/../control_plane/templates/kubeadm-join.yaml.j2"
         dest: /etc/kubernetes/kubeadm-config.yaml
         mode: "0600"
+      no_log: true
 
     # Workers do not touch etcd, so they join in parallel
     - name: Run kubeadm join

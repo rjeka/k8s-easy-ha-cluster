@@ -52,6 +52,14 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
 - Hetzner Cloud as an optional second stand: billed even when powered off, so destroy instead of stop;
   private networks drop ARP for foreign IPs, so kube-vip ARP will not work there (use Hetzner LB).
 
+## Hardening backlog (from the security review)
+
+- Pin sha256 per version and arch for containerd, runc and Helm instead of same-origin checksum files, or verify GPG signatures.
+- Pin Helm charts and the kube-vip image by digest; pin the pkgs.k8s.io key fingerprint.
+- Pin collection versions, CI pip packages and GitHub Actions by commit SHA.
+- `reset.yml`: require `reset_confirm` to equal `k8s_cluster_name`; remove kubeadm join configs after joining.
+- Audit log, Secret encryption at rest, Pod Security Admission, CA-signed kubelet serving certificates, scheduled etcd backups.
+
 ## Later
 
 - Talos Linux on the same stand for comparison (no Ansible/kubeadm, `talosctl`).

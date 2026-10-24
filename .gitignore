@@ -5,3 +5,4 @@ inventory/*/artifacts/
 *.retry
 .DS_Store
 .idea/
+.ansible/

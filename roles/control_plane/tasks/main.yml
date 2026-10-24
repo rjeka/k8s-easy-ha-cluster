@@ -28,6 +28,18 @@
   ansible.builtin.set_fact:
     control_plane_etcd_member: "{{ (control_plane_etcd_members.stdout | from_json).members
       | selectattr('peerURLs', 'contains', 'https://' ~ k8s_node_ip ~ ':2380') | first | default({}) }}"
+    control_plane_etcd_member_by_name: "{{ (control_plane_etcd_members.stdout | from_json).members
+      | selectattr('name', 'defined') | selectattr('name', 'equalto', inventory_hostname) | first | default({}) }}"
+
+# A started member with this name but another peer URL means k8s_node_ip is
+# wrong; treating the node as a failed join would reset a healthy member
+- name: Check that the node address matches its etcd member
+  ansible.builtin.assert:
+    that: control_plane_etcd_member_by_name | length == 0
+      or ('https://' ~ k8s_node_ip ~ ':2380') in control_plane_etcd_member_by_name.peerURLs
+    fail_msg: >-
+      etcd member {{ inventory_hostname }} uses {{ control_plane_etcd_member_by_name.peerURLs | default([]) | join(',') }},
+      but k8s_node_ip is {{ k8s_node_ip }}; fix k8s_node_ip before rerunning
 
 - name: Join the other control plane nodes
   ansible.builtin.include_tasks: join.yml
@@ -61,9 +73,26 @@
   delay: 5
   run_once: true
 
+- name: Create local artifacts directory
+  ansible.builtin.file:
+    path: "{{ k8s_kubeconfig_local_path | dirname }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  become: false
+  run_once: true
+
 - name: Fetch admin kubeconfig
   ansible.builtin.fetch:
     src: /etc/kubernetes/admin.conf
     dest: "{{ k8s_kubeconfig_local_path }}"
     flat: true
+  run_once: true
+
+- name: Restrict local admin kubeconfig
+  ansible.builtin.file:
+    path: "{{ k8s_kubeconfig_local_path }}"
+    mode: "0600"
+  delegate_to: localhost
+  become: false
   run_once: true

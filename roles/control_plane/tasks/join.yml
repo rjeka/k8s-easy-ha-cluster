@@ -11,6 +11,7 @@
     src: kubeadm-join.yaml.j2
     dest: "{{ control_plane_kubeadm_config }}"
     mode: "0600"
+  no_log: true
 
 # One node at a time so etcd never loses quorum while a member is added
 - name: Run kubeadm join

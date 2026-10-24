@@ -31,10 +31,18 @@
       changed_when: false
       failed_when: false
 
+    - name: Download Gateway API CRDs
+      ansible.builtin.get_url:
+        url: "{{ cilium_gateway_api_crds }}"
+        dest: "{{ cilium_download_dir }}/gateway-api-v{{ cilium_gateway_api_version }}.yaml"
+        checksum: "sha256:{{ cilium_gateway_api_crds_sha256 }}"
+        mode: "0644"
+
     # Cilium only enables its Gateway controller if the CRDs exist at start
     - name: Apply Gateway API CRDs
       ansible.builtin.command: >-
-        kubectl --kubeconfig {{ cilium_kubeconfig }} apply --server-side -f {{ cilium_gateway_api_crds }}
+        kubectl --kubeconfig {{ cilium_kubeconfig }} apply --server-side
+        -f {{ cilium_download_dir }}/gateway-api-v{{ cilium_gateway_api_version }}.yaml
       when: cilium_gateway_api_installed.stdout != 'v' ~ cilium_gateway_api_version
       changed_when: true
 
