@@ -26,3 +26,8 @@
     - common
     - containerd
     - kubeadm
+
+- name: Control plane endpoint
+  hosts: control_plane
+  roles:
+    - kube_vip

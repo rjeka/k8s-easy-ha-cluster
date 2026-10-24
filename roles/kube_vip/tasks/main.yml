@@ -1,0 +1,27 @@
+---
+- name: Check whether this node is already part of a cluster
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: kube_vip_admin_conf
+
+# Since Kubernetes 1.29 admin.conf gets its RBAC binding only after the API
+# server is up, so the first node bootstraps kube-vip with super-admin.conf.
+# Re-running the role after init switches it back to admin.conf.
+- name: Pick kubeconfig for kube-vip
+  ansible.builtin.set_fact:
+    kube_vip_kubeconfig: >-
+      {{ '/etc/kubernetes/super-admin.conf'
+         if inventory_hostname == groups['control_plane'][0] and not kube_vip_admin_conf.stat.exists
+         else '/etc/kubernetes/admin.conf' }}
+
+- name: Create static pod directory
+  ansible.builtin.file:
+    path: /etc/kubernetes/manifests
+    state: directory
+    mode: "0755"
+
+- name: Install kube-vip static pod
+  ansible.builtin.template:
+    src: kube-vip.yaml.j2
+    dest: "{{ kube_vip_manifest }}"
+    mode: "0600"
