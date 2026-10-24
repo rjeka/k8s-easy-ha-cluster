@@ -1,0 +1,17 @@
+---
+# Applies the node roles to the machine it runs on. CI uses it on throwaway
+# GitHub runners: real systemd, kernel modules and apt, unlike containers.
+- name: Node roles on localhost
+  hosts: localhost
+  connection: local
+  become: true
+  vars_files:
+    - ../inventory/example/group_vars/all.yml
+  roles:
+    - common
+    - containerd
+    - kubeadm
+  post_tasks:
+    - name: Check that containerd serves the CRI
+      ansible.builtin.command: crictl info
+      changed_when: false

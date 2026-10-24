@@ -28,7 +28,13 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
 9. [x] Role `cilium` with Gateway API (kube-proxy replacement; LoadBalancer IPs for Gateways via Cilium LB IPAM + L2 announcements still to do)
 10. [x] Addons: cert-manager, metrics-server (metrics-server uses --kubelet-insecure-tls until kubelet serving certs are CA-signed)
 11. [x] Playbooks `upgrade.yml` (node by node) and `reset.yml` (1.36.5 -> 1.37.1 verified; API through the VIP was down ~17 probes because kube-vip keeps the VIP on a node whose apiserver is restarting: move the VIP away before upgrading a control plane node)
-12. [ ] Tests: ansible-lint, molecule, local VM stand (3 control plane + 1 worker)
+12. [ ] Tests: lint and stand done, CI written but not yet run on GitHub (first push)
+    - `.github/workflows/ci.yml`: yamllint, ansible-lint, syntax-check, then node roles applied twice
+      on GitHub runners (ubuntu-22.04, ubuntu-24.04, ubuntu-24.04-arm) via `tests/node-roles.yml`.
+      Runners are real VMs with systemd and kernel modules, so this replaces molecule in containers.
+    - `stand/test.sh [--fresh]`: full deploy on Lima, idempotence, nodes Ready, 3 etcd members, GatewayClass.
+    - Ubuntu 22.04 cannot be tested on the M4 stand (kernel 5.15: Python cryptography dies with SIGILL),
+      CI covers it on amd64. Debian 12 still untested.
 13. [ ] English docs: README, architecture diagram (archify), quickstart, variables, upgrade, troubleshooting
 14. [ ] Claude files: project CLAUDE.md, agents (ansible dev, reviewer, stand tester), skills (stand up, checks, k8s upgrade)
 

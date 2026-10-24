@@ -1,3 +1,4 @@
+---
 # Lima template for one stand node. stand/up.sh passes the static address
 # through the StaticIP param.
 base: template:ubuntu-24.04
