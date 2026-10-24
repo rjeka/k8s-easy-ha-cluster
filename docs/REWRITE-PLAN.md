@@ -28,7 +28,7 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
 9. [x] Role `cilium` with Gateway API (kube-proxy replacement; LoadBalancer IPs for Gateways via Cilium LB IPAM + L2 announcements still to do)
 10. [x] Addons: cert-manager, metrics-server (metrics-server uses --kubelet-insecure-tls until kubelet serving certs are CA-signed)
 11. [x] Playbooks `upgrade.yml` (node by node) and `reset.yml` (1.36.5 -> 1.37.1 verified with zero failed API probes: the VIP is handed to another node before each control plane node is upgraded)
-12. [ ] Tests: lint and stand done, CI written but not yet run on GitHub (first push)
+12. [x] Tests: lint, stand integration test and CI (green on GitHub since 1c449fd)
     - `.github/workflows/ci.yml`: yamllint, ansible-lint, syntax-check, then node roles applied twice
       on GitHub runners (ubuntu-22.04, ubuntu-24.04, ubuntu-24.04-arm) via `tests/node-roles.yml`.
       Runners are real VMs with systemd and kernel modules, so this replaces molecule in containers.
