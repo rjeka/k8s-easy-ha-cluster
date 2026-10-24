@@ -32,6 +32,13 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
 13. [ ] English docs: README, architecture diagram (archify), quickstart, variables, upgrade, troubleshooting
 14. [ ] Claude files: project CLAUDE.md, agents (ansible dev, reviewer, stand tester), skills (stand up, checks, k8s upgrade)
 
+## CI (to plan)
+
+- On every PR: yamllint, ansible-lint, `--syntax-check`, molecule for single roles.
+- Full playbook run (3 control plane + 1 worker) on real VMs: GitHub-hosted runners are too small
+  for nested VMs, so either a self-hosted runner on the Mac stand or ephemeral Hetzner VMs
+  created and destroyed by the job. Decide during step 12.
+
 ## Test stand
 
 - Main stand: local VMs on the Mac (Apple Silicon, arm64) via Lima or Vagrant, real L2 so kube-vip ARP works.
