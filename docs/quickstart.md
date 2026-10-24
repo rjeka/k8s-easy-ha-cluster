@@ -8,7 +8,7 @@ Nodes:
 - An odd number of control plane nodes (3 is the usual choice) and any number of workers.
 - 2 CPU and 2 GiB of RAM at least per node; 4 GiB is more comfortable.
 - All nodes in one L2 network: kube-vip announces the API address with ARP.
-- SSH access with a user that can `sudo` without a password.
+- SSH access with a user that can `sudo` (without a password, or add `--ask-become-pass`).
 - Internet access to pkgs.k8s.io, github.com (with its release download hosts), get.helm.sh, ghcr.io,
   registry.k8s.io, quay.io and the Helm chart repositories (no offline mode yet).
 
@@ -80,6 +80,8 @@ kubectl -n kube-system get pods
 ```
 
 The same kubeconfig is placed in `~/.kube/config` of `ansible_user` on every control plane node.
+It grants full cluster-admin: never commit or share it (`inventory/*/artifacts/` is git-ignored) and
+create less privileged kubeconfigs for daily work.
 
 ## Add nodes
 

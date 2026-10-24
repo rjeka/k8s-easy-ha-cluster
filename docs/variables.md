@@ -60,7 +60,7 @@ it the connecting user is used.
 | --- | --- | --- |
 | `addon_metrics_server_enabled` | required, example `true` | Install metrics-server (`kubectl top`). |
 | `addons_metrics_server_chart_version` | `3.14.0` | metrics-server chart version. |
-| `addons_metrics_server_kubelet_insecure_tls` | `true` | kubeadm kubelets serve self-signed certificates. Turn this off once kubelet serving certificates are signed by the cluster CA. |
+| `addons_metrics_server_kubelet_insecure_tls` | `true` | kubeadm kubelets serve self-signed certificates, so metrics-server skips verifying them (a spoofing risk on the node network). Turn this off once kubelet serving certificates are signed by the cluster CA. |
 | `addon_cert_manager_enabled` | required, example `false` | Install cert-manager with its CRDs. |
 | `addons_cert_manager_version` | `1.21.3` | cert-manager chart version. |
 

@@ -68,7 +68,10 @@ sudo crictl exec $(sudo crictl ps -q --name etcd) etcdctl \
   --key /etc/kubernetes/pki/etcd/server.key \
   snapshot save /var/lib/etcd/snapshot.db
 sudo install -o "$USER" -m 0600 /var/lib/etcd/snapshot.db ~/etcd-$(date +%F).db
+sudo rm /var/lib/etcd/snapshot.db
 ```
 
-Copy the snapshot and `/etc/kubernetes/pki` off the node. Scheduled backups are not part of the
+Copy the snapshot and `/etc/kubernetes/pki` off the node, then delete `~/etcd-*.db` there. Both
+contain everything needed to take over the cluster (the snapshot holds all Secrets, `pki` the CA
+keys): keep them only in encrypted storage with restricted access, never in git or shared drives. Scheduled backups are not part of the
 playbooks yet.
