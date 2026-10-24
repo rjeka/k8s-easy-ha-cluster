@@ -1,0 +1,5 @@
+---
+control_plane_kubeadm_config: /etc/kubernetes/kubeadm-config.yaml
+# Node address used for the API server and kubelet; nodes often have more
+# than one interface (Lima VMs share one NAT address on eth0)
+control_plane_node_ip: "{{ ansible_host }}"

@@ -20,6 +20,8 @@ kube_vip_version: v1.3.1
 
 cilium_version: 1.20.4
 cilium_gateway_api_enabled: true
+# Cilium replaces kube-proxy; kubeadm then skips the kube-proxy addon
+cilium_kube_proxy_replacement: true
 
 # Optional addons
 addon_cert_manager_enabled: false

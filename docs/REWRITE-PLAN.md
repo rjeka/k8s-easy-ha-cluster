@@ -23,7 +23,7 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
 4. [x] Role `containerd`
 5. [x] Role `kubeadm`: packages, hold
 6. [x] Role `kube_vip` (VIP itself is verified in step 7; control_plane must re-run kube_vip after init to switch the first node from super-admin.conf to admin.conf)
-7. [ ] Role `control_plane`: init first node, join the rest
+7. [x] Role `control_plane`: init first node, join the rest (VIP failover verified on the stand)
 8. [ ] Role `workers`: join
 9. [ ] Role `cilium` with Gateway API
 10. [ ] Addons: cert-manager, metrics-server

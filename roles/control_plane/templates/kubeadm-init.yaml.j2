@@ -1,0 +1,32 @@
+# {{ ansible_managed }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: {{ control_plane_node_ip }}
+  bindPort: {{ k8s_api_port }}
+nodeRegistration:
+  name: {{ inventory_hostname }}
+  criSocket: unix:///run/containerd/containerd.sock
+  kubeletExtraArgs:
+    - name: node-ip
+      value: {{ control_plane_node_ip }}
+{% if cilium_kube_proxy_replacement %}
+skipPhases:
+  - addon/kube-proxy
+{% endif %}
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+clusterName: {{ k8s_cluster_name }}
+kubernetesVersion: v{{ k8s_version }}
+controlPlaneEndpoint: {{ k8s_vip }}:{{ k8s_api_port }}
+apiServer:
+  certSANs:
+    - {{ k8s_vip }}
+networking:
+  podSubnet: {{ k8s_pod_subnet }}
+  serviceSubnet: {{ k8s_service_subnet }}
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: systemd

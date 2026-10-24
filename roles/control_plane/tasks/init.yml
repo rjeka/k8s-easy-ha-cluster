@@ -1,0 +1,16 @@
+---
+- name: Write kubeadm init config
+  ansible.builtin.template:
+    src: kubeadm-init.yaml.j2
+    dest: "{{ control_plane_kubeadm_config }}"
+    mode: "0600"
+
+- name: Run kubeadm init
+  ansible.builtin.command: >-
+    kubeadm init --config {{ control_plane_kubeadm_config }} --upload-certs
+  when: not control_plane_admin_conf.stat.exists
+  changed_when: true
+
+- name: Switch kube-vip from super-admin.conf to admin.conf
+  ansible.builtin.include_role:
+    name: kube_vip

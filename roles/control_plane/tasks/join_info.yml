@@ -1,0 +1,23 @@
+---
+# Shared with the workers role: a fresh bootstrap token, and for control
+# plane nodes a fresh certificate key (the uploaded certs expire after 2h)
+- name: Create bootstrap token
+  ansible.builtin.command: kubeadm token create --ttl 1h --print-join-command
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  run_once: true
+  register: control_plane_join_command
+  changed_when: true
+
+- name: Upload control plane certificates
+  ansible.builtin.command: kubeadm init phase upload-certs --upload-certs
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  run_once: true
+  register: control_plane_upload_certs
+  changed_when: true
+  when: inventory_hostname in groups['control_plane']
+
+- name: Parse join parameters
+  ansible.builtin.set_fact:
+    control_plane_join_token: "{{ control_plane_join_command.stdout | regex_search('--token (\\S+)', '\\1') | first }}"
+    control_plane_join_ca_hash: "{{ control_plane_join_command.stdout | regex_search('--discovery-token-ca-cert-hash (\\S+)', '\\1') | first }}"
+    control_plane_certificate_key: "{{ control_plane_upload_certs.stdout_lines | default([''], true) | last }}"
