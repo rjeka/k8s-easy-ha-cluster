@@ -37,3 +37,8 @@
   hosts: workers
   roles:
     - workers
+
+- name: Cluster network
+  hosts: control_plane[0]
+  roles:
+    - cilium

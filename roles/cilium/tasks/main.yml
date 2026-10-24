@@ -1,0 +1,50 @@
+---
+- name: Download Helm
+  ansible.builtin.get_url:
+    url: "https://get.helm.sh/helm-v{{ cilium_helm_version }}-linux-{{ cilium_arch }}.tar.gz"
+    dest: "{{ cilium_download_dir }}/helm-v{{ cilium_helm_version }}-linux-{{ cilium_arch }}.tar.gz"
+    checksum: "sha256:https://get.helm.sh/helm-v{{ cilium_helm_version }}-linux-{{ cilium_arch }}.tar.gz.sha256sum"
+    mode: "0644"
+
+- name: Install Helm
+  ansible.builtin.unarchive:
+    src: "{{ cilium_download_dir }}/helm-v{{ cilium_helm_version }}-linux-{{ cilium_arch }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    extra_opts: [--strip-components=1, "linux-{{ cilium_arch }}/helm"]
+    creates: /usr/local/bin/helm
+
+- name: Install Gateway API CRDs
+  when: cilium_gateway_api_enabled
+  block:
+    - name: Get installed Gateway API version
+      ansible.builtin.command: >-
+        kubectl --kubeconfig {{ cilium_kubeconfig }} get crd gateways.gateway.networking.k8s.io
+        -o jsonpath='{.metadata.annotations.gateway\.networking\.k8s\.io/bundle-version}'
+      register: cilium_gateway_api_installed
+      changed_when: false
+      failed_when: false
+
+    # Cilium only enables its Gateway controller if the CRDs exist at start
+    - name: Apply Gateway API CRDs
+      ansible.builtin.command: >-
+        kubectl --kubeconfig {{ cilium_kubeconfig }} apply --server-side -f {{ cilium_gateway_api_crds }}
+      when: cilium_gateway_api_installed.stdout != 'v' ~ cilium_gateway_api_version
+      changed_when: true
+
+- name: Install Cilium
+  kubernetes.core.helm:
+    name: cilium
+    chart_ref: cilium
+    chart_repo_url: https://helm.cilium.io/
+    chart_version: "{{ cilium_version }}"
+    release_namespace: kube-system
+    kubeconfig: "{{ cilium_kubeconfig }}"
+    values: "{{ lookup('ansible.builtin.template', 'values.yaml.j2') | from_yaml }}"
+    wait: true
+    wait_timeout: 10m
+
+- name: Wait for all nodes to become Ready
+  ansible.builtin.command: >-
+    kubectl --kubeconfig {{ cilium_kubeconfig }} wait --for=condition=Ready nodes --all --timeout=5m
+  changed_when: false

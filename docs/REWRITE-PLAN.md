@@ -25,7 +25,7 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
 6. [x] Role `kube_vip` (VIP itself is verified in step 7; control_plane must re-run kube_vip after init to switch the first node from super-admin.conf to admin.conf)
 7. [x] Role `control_plane`: init first node, join the rest (VIP failover verified on the stand)
 8. [x] Role `workers`: join
-9. [ ] Role `cilium` with Gateway API
+9. [x] Role `cilium` with Gateway API (kube-proxy replacement; LoadBalancer IPs for Gateways via Cilium LB IPAM + L2 announcements still to do)
 10. [ ] Addons: cert-manager, metrics-server
 11. [ ] Playbooks `upgrade.yml` (node by node) and `reset.yml`
 12. [ ] Tests: ansible-lint, molecule, local VM stand (3 control plane + 1 worker)
