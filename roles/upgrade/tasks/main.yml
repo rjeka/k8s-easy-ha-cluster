@@ -93,6 +93,16 @@
       delegate_to: "{{ groups['control_plane'][0] }}"
       changed_when: true
 
+  # A node that failed halfway stays cordoned on purpose: workloads must not
+  # land on a half-upgraded kubelet. Fix it, rerun upgrade.yml or uncordon.
+  rescue:
+    - name: Report the cordoned node
+      ansible.builtin.fail:
+        msg: >-
+          Upgrade of {{ inventory_hostname }} failed at '{{ ansible_failed_task.name }}'.
+          If it was drained it stays cordoned; fix the cause and rerun upgrade.yml, or run
+          kubectl uncordon {{ inventory_hostname }} to accept it as is.
+
   # Also on failure: never leave a control plane node without kube-vip
   always:
     - name: Bring kube-vip back
