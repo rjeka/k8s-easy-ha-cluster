@@ -1,0 +1,25 @@
+---
+# Kubernetes minor version; packages come from pkgs.k8s.io/core:/stable:/v<minor>
+k8s_version: "1.37"
+k8s_cluster_name: kubernetes
+
+# Control plane endpoint. kube-vip announces this address via ARP on the
+# control plane nodes; it must be a free address in the nodes' L2 network.
+k8s_vip: 192.168.56.10
+k8s_vip_interface: eth1
+k8s_api_port: 6443
+
+k8s_pod_subnet: 10.244.0.0/16
+k8s_service_subnet: 10.96.0.0/12
+
+kube_vip_version: v1.3.1
+
+cilium_version: 1.20.4
+cilium_gateway_api_enabled: true
+
+# Optional addons
+addon_cert_manager_enabled: false
+addon_metrics_server_enabled: true
+
+# Where to put the admin kubeconfig on the machine running Ansible
+k8s_kubeconfig_local_path: "{{ inventory_dir }}/artifacts/admin.conf"

@@ -1,4 +1,7 @@
+collections/
+inventory/*/artifacts/
+!inventory/example/
+.vagrant/
 *.retry
-test.yaml
-habr.ini
+.DS_Store
 .idea/
