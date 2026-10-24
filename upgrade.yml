@@ -1,0 +1,14 @@
+---
+# Upgrade the cluster to k8s_version: bump it in group_vars, then run this.
+# Nodes go one at a time, the first control plane node first.
+- name: Upgrade control plane nodes
+  hosts: control_plane
+  serial: 1
+  roles:
+    - upgrade
+
+- name: Upgrade workers
+  hosts: workers
+  serial: "{{ upgrade_workers_batch | default(1) }}"
+  roles:
+    - upgrade

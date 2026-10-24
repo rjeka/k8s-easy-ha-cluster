@@ -1,0 +1,3 @@
+---
+upgrade_kubeconfig: /etc/kubernetes/admin.conf
+upgrade_drain_timeout: 5m

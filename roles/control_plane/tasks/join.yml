@@ -1,4 +1,8 @@
 ---
+- name: Clean up a previous failed join
+  ansible.builtin.include_tasks: cleanup_failed_join.yml
+  when: control_plane_admin_conf.stat.exists
+
 - name: Get join parameters from the first control plane node
   ansible.builtin.include_tasks: join_info.yml
 

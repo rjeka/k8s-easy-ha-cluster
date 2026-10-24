@@ -1,0 +1,13 @@
+---
+- name: Install python3-debian for deb822_repository
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+
+# The repository is per minor version, so an upgrade switches it
+- name: Add Kubernetes apt repository
+  ansible.builtin.deb822_repository:
+    name: kubernetes
+    uris: "{{ kubeadm_repo_url }}"
+    suites: /
+    signed_by: "{{ kubeadm_repo_url }}Release.key"

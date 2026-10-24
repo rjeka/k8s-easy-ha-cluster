@@ -23,6 +23,9 @@ provision:
         version: 2
         ethernets:
           lima0:
+            # only the static address: etcd checks the source IP against
+            # the peer certificate, a second DHCP address breaks joins
+            dhcp4: false
             addresses: [{{.Param.StaticIP}}/24]
       NETPLAN
       chmod 600 /etc/netplan/60-stand.yaml

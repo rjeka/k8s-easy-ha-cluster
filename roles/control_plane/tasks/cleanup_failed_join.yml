@@ -1,0 +1,38 @@
+---
+- name: Reset the half-joined node
+  ansible.builtin.command: kubeadm reset --force
+  changed_when: true
+
+# kubeadm adds the new etcd member before it is started; a failed join
+# leaves it behind and etcd then refuses the next attempt
+- name: List etcd members
+  ansible.builtin.shell: >-
+    set -o pipefail;
+    crictl exec $(crictl ps -q --name etcd | head -1) etcdctl
+    --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt
+    --key /etc/kubernetes/pki/etcd/server.key member list -w json
+  args:
+    executable: /bin/bash
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  register: control_plane_etcd_members
+  changed_when: false
+
+- name: Remove the stale etcd member
+  ansible.builtin.shell: >-
+    set -o pipefail;
+    crictl exec $(crictl ps -q --name etcd | head -1) etcdctl
+    --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt
+    --key /etc/kubernetes/pki/etcd/server.key member remove {{ '%x' | format(item.ID) }}
+  args:
+    executable: /bin/bash
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  loop: "{{ (control_plane_etcd_members.stdout | from_json).members
+            | selectattr('peerURLs', 'contains', 'https://' ~ k8s_node_ip ~ ':2380') }}"
+  loop_control:
+    label: "{{ '%x' | format(item.ID) }}"
+  changed_when: true
+
+# kubeadm reset empties the static pod directory
+- name: Restore the kube-vip static pod
+  ansible.builtin.include_role:
+    name: kube_vip

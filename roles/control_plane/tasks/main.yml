@@ -8,11 +8,22 @@
   ansible.builtin.include_tasks: init.yml
   when: inventory_hostname == groups['control_plane'][0]
 
+# Ask the cluster rather than trusting local files: a failed join leaves
+# admin.conf behind without a working member
+- name: Check whether the node is registered in the cluster
+  ansible.builtin.command: >-
+    kubectl --kubeconfig /etc/kubernetes/admin.conf get node {{ inventory_hostname }} -o name
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  register: control_plane_registered
+  changed_when: false
+  failed_when: false
+  when: inventory_hostname != groups['control_plane'][0]
+
 - name: Join the other control plane nodes
   ansible.builtin.include_tasks: join.yml
   when:
     - inventory_hostname != groups['control_plane'][0]
-    - not control_plane_admin_conf.stat.exists
+    - control_plane_registered.rc != 0
 
 - name: Create kubeconfig directory for the Ansible user
   ansible.builtin.file:

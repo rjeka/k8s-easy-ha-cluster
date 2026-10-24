@@ -1,0 +1,86 @@
+---
+- name: Get kubelet version
+  ansible.builtin.command: kubelet --version
+  register: upgrade_kubelet_version
+  changed_when: false
+
+- name: Upgrade the node
+  when: upgrade_kubelet_version.stdout != 'Kubernetes v' ~ k8s_version
+  block:
+    - name: Get cluster version
+      ansible.builtin.command: >-
+        kubectl --kubeconfig {{ upgrade_kubeconfig }} version -o json
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      register: upgrade_cluster_version
+      changed_when: false
+
+    # kubeadm upgrades one minor version at a time
+    - name: Check upgrade path
+      ansible.builtin.assert:
+        that:
+          - _target is version(_current, '>=')
+          - (_target.split('.')[1] | int) - (_current.split('.')[1] | int) <= 1
+        fail_msg: "Cannot go from {{ _current }} to {{ _target }}: one minor version at a time"
+      vars:
+        _current: "{{ (upgrade_cluster_version.stdout | from_json).serverVersion.gitVersion | regex_replace('^v', '') }}"
+        _target: "{{ k8s_version }}"
+
+    - name: Switch the Kubernetes apt repository
+      ansible.builtin.include_role:
+        name: kubeadm
+        tasks_from: repo.yml
+
+    - name: Upgrade kubeadm
+      ansible.builtin.apt:
+        name: "kubeadm={{ k8s_version }}-*"
+        update_cache: true
+        allow_change_held_packages: true
+
+    - name: Upgrade the control plane (first node)
+      ansible.builtin.command: kubeadm upgrade apply v{{ k8s_version }} --yes
+      when: inventory_hostname == groups['control_plane'][0]
+      changed_when: true
+
+    - name: Upgrade the node configuration
+      ansible.builtin.command: kubeadm upgrade node
+      when: inventory_hostname != groups['control_plane'][0]
+      changed_when: true
+
+    - name: Drain the node
+      ansible.builtin.command: >-
+        kubectl --kubeconfig {{ upgrade_kubeconfig }} drain {{ inventory_hostname }}
+        --ignore-daemonsets --delete-emptydir-data --timeout={{ upgrade_drain_timeout }}
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      changed_when: true
+
+    - name: Upgrade kubelet and kubectl
+      ansible.builtin.apt:
+        name:
+          - "kubelet={{ k8s_version }}-*"
+          - "kubectl={{ k8s_version }}-*"
+        allow_change_held_packages: true
+
+    - name: Hold Kubernetes packages
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop: [kubelet, kubeadm, kubectl]
+
+    - name: Restart kubelet
+      ansible.builtin.systemd_service:
+        name: kubelet
+        state: restarted
+        daemon_reload: true
+
+    - name: Wait for the node to become Ready
+      ansible.builtin.command: >-
+        kubectl --kubeconfig {{ upgrade_kubeconfig }} wait --for=condition=Ready
+        node/{{ inventory_hostname }} --timeout=5m
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      changed_when: false
+
+    - name: Uncordon the node
+      ansible.builtin.command: >-
+        kubectl --kubeconfig {{ upgrade_kubeconfig }} uncordon {{ inventory_hostname }}
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      changed_when: true

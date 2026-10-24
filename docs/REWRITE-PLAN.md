@@ -27,7 +27,7 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
 8. [x] Role `workers`: join
 9. [x] Role `cilium` with Gateway API (kube-proxy replacement; LoadBalancer IPs for Gateways via Cilium LB IPAM + L2 announcements still to do)
 10. [x] Addons: cert-manager, metrics-server (metrics-server uses --kubelet-insecure-tls until kubelet serving certs are CA-signed)
-11. [ ] Playbooks `upgrade.yml` (node by node) and `reset.yml`
+11. [x] Playbooks `upgrade.yml` (node by node) and `reset.yml` (1.36.5 -> 1.37.1 verified; API through the VIP was down ~17 probes because kube-vip keeps the VIP on a node whose apiserver is restarting: move the VIP away before upgrading a control plane node)
 12. [ ] Tests: ansible-lint, molecule, local VM stand (3 control plane + 1 worker)
 13. [ ] English docs: README, architecture diagram (archify), quickstart, variables, upgrade, troubleshooting
 14. [ ] Claude files: project CLAUDE.md, agents (ansible dev, reviewer, stand tester), skills (stand up, checks, k8s upgrade)
