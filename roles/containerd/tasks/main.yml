@@ -1,0 +1,72 @@
+---
+- name: Create download directory
+  ansible.builtin.file:
+    path: "{{ containerd_download_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Download containerd
+  ansible.builtin.get_url:
+    url: "{{ _containerd_url }}"
+    dest: "{{ containerd_download_dir }}/{{ _containerd_url | basename }}"
+    checksum: "sha256:{{ _containerd_url }}.sha256sum"
+    mode: "0644"
+  vars:
+    _containerd_url: "{{ containerd_release_url }}/containerd-{{ containerd_version }}-linux-{{ containerd_arch }}.tar.gz"
+
+- name: Get installed containerd version
+  ansible.builtin.command: /usr/local/bin/containerd --version
+  register: containerd_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install containerd binaries
+  ansible.builtin.unarchive:
+    src: "{{ containerd_download_dir }}/containerd-{{ containerd_version }}-linux-{{ containerd_arch }}.tar.gz"
+    dest: /usr/local
+    remote_src: true
+  when: ('v' ~ containerd_version ~ ' ') not in containerd_installed.stdout | default('')
+  notify: Restart containerd
+
+- name: Install runc
+  ansible.builtin.get_url:
+    url: "https://github.com/opencontainers/runc/releases/download/v{{ containerd_runc_version }}/runc.{{ containerd_arch }}"
+    dest: /usr/local/sbin/runc
+    checksum: "sha256:https://github.com/opencontainers/runc/releases/download/v{{ containerd_runc_version }}/runc.sha256sum"
+    mode: "0755"
+  notify: Restart containerd
+
+- name: Install containerd systemd unit
+  ansible.builtin.copy:
+    src: containerd.service
+    dest: /etc/systemd/system/containerd.service
+    mode: "0644"
+  notify: Restart containerd
+
+- name: Create containerd config directory
+  ansible.builtin.file:
+    path: /etc/containerd
+    state: directory
+    mode: "0755"
+
+- name: Configure containerd
+  ansible.builtin.template:
+    src: config.toml.j2
+    dest: /etc/containerd/config.toml
+    mode: "0644"
+  notify: Restart containerd
+
+- name: Configure crictl
+  ansible.builtin.copy:
+    dest: /etc/crictl.yaml
+    content: |
+      runtime-endpoint: unix:///run/containerd/containerd.sock
+      image-endpoint: unix:///run/containerd/containerd.sock
+    mode: "0644"
+
+- name: Enable containerd
+  ansible.builtin.systemd_service:
+    name: containerd
+    state: started
+    enabled: true
+    daemon_reload: true

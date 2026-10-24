@@ -12,6 +12,9 @@ k8s_api_port: 6443
 k8s_pod_subnet: 10.244.0.0/16
 k8s_service_subnet: 10.96.0.0/12
 
+containerd_version: "2.4.2"
+containerd_runc_version: "1.5.2"
+
 kube_vip_version: v1.3.1
 
 cilium_version: 1.20.4
