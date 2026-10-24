@@ -1,3 +1,5 @@
 ---
 upgrade_kubeconfig: /etc/kubernetes/admin.conf
 upgrade_drain_timeout: 5m
+upgrade_kube_vip_manifest: /etc/kubernetes/manifests/kube-vip.yaml
+upgrade_kube_vip_parked: /etc/kubernetes/kube-vip.yaml.parked

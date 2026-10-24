@@ -36,6 +36,14 @@
         update_cache: true
         allow_change_held_packages: true
 
+    # kube-vip would keep the VIP here while the API server restarts; with
+    # its static pod gone it releases the lease and another node takes over
+    - name: Hand the VIP to another control plane node
+      ansible.builtin.include_tasks: vip_away.yml
+      when:
+        - inventory_hostname in groups['control_plane']
+        - groups['control_plane'] | length > 1
+
     - name: Upgrade the control plane (first node)
       ansible.builtin.command: kubeadm upgrade apply v{{ k8s_version }} --yes
       when: inventory_hostname == groups['control_plane'][0]
@@ -84,3 +92,10 @@
         kubectl --kubeconfig {{ upgrade_kubeconfig }} uncordon {{ inventory_hostname }}
       delegate_to: "{{ groups['control_plane'][0] }}"
       changed_when: true
+
+  # Also on failure: never leave a control plane node without kube-vip
+  always:
+    - name: Bring kube-vip back
+      ansible.builtin.command: mv {{ upgrade_kube_vip_parked }} {{ upgrade_kube_vip_manifest }}
+      args:
+        removes: "{{ upgrade_kube_vip_parked }}"

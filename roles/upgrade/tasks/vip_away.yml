@@ -1,0 +1,23 @@
+---
+- name: Park the kube-vip static pod
+  ansible.builtin.command: mv {{ upgrade_kube_vip_manifest }} {{ upgrade_kube_vip_parked }}
+  args:
+    removes: "{{ upgrade_kube_vip_manifest }}"
+
+- name: Wait until another node holds the VIP lease
+  ansible.builtin.command: >-
+    kubectl --kubeconfig {{ upgrade_kubeconfig }} -n kube-system get lease plndr-cp-lock
+    -o jsonpath={.spec.holderIdentity}
+  delegate_to: "{{ (groups['control_plane'] | difference([inventory_hostname]))[0] }}"
+  register: upgrade_vip_holder
+  until: upgrade_vip_holder.rc == 0 and upgrade_vip_holder.stdout not in ['', inventory_hostname]
+  retries: 30
+  delay: 2
+  changed_when: false
+
+# kube-vip may leave the address behind when its pod is removed
+- name: Drop the VIP from this node
+  ansible.builtin.command: ip addr del {{ k8s_vip }}/32 dev {{ k8s_vip_interface }}
+  register: upgrade_vip_del
+  changed_when: upgrade_vip_del.rc == 0
+  failed_when: false

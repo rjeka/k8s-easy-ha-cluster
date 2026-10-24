@@ -16,4 +16,14 @@ for node in $NODES; do
     limactl start --tty=false --name "$name" --set ".param.StaticIP = \"$ip\"" node.yaml
   fi
 done
+
+# limactl returns before the static address is always up; wait for SSH on it
+for node in $NODES; do
+  ip="${node#*:}"
+  for _ in $(seq 1 60); do
+    ssh -q -i ~/.lima/_config/user -o BatchMode=yes -o StrictHostKeyChecking=no \
+      -o UserKnownHostsFile=/dev/null -o ConnectTimeout=2 "$ip" true && break
+    sleep 2
+  done
+done
 limactl list

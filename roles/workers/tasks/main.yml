@@ -1,12 +1,22 @@
 ---
-- name: Check whether this node has joined the cluster
-  ansible.builtin.stat:
-    path: /etc/kubernetes/kubelet.conf
-  register: workers_kubelet_conf
+# Ask the cluster rather than trusting kubelet.conf: a failed join can leave
+# it behind without a registered Node. Errors other than NotFound fail.
+- name: Check whether the node is registered in the cluster
+  ansible.builtin.command: >-
+    kubectl --kubeconfig /etc/kubernetes/admin.conf get node {{ inventory_hostname }} -o name
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  register: workers_registered
+  changed_when: false
+  failed_when: workers_registered.rc != 0 and 'NotFound' not in workers_registered.stderr
 
 - name: Join the cluster
-  when: not workers_kubelet_conf.stat.exists
+  when: workers_registered.rc != 0
   block:
+    - name: Clean up a previous failed join
+      ansible.builtin.command: kubeadm reset --force
+      args:
+        removes: /etc/kubernetes/kubelet.conf
+
     - name: Get join parameters from the first control plane node
       ansible.builtin.include_role:
         name: control_plane
