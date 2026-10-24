@@ -28,7 +28,7 @@ cilium_gateway_api_enabled: true
 cilium_kube_proxy_replacement: true
 
 # Optional addons
-addon_cert_manager_enabled: false
+addon_cert_manager_enabled: true
 addon_metrics_server_enabled: true
 
 # Where to put the admin kubeconfig on the machine running Ansible

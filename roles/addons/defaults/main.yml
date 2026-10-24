@@ -1,0 +1,9 @@
+---
+addons_kubeconfig: /etc/kubernetes/admin.conf
+
+addons_metrics_server_chart_version: "3.14.0"
+# kubeadm kubelets serve self-signed certificates; switch this off once
+# kubelet serving certificates are signed by the cluster CA
+addons_metrics_server_kubelet_insecure_tls: true
+
+addons_cert_manager_version: "1.21.3"

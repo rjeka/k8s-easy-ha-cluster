@@ -14,6 +14,21 @@
     - inventory_hostname != groups['control_plane'][0]
     - not control_plane_admin_conf.stat.exists
 
+- name: Create kubeconfig directory for the Ansible user
+  ansible.builtin.file:
+    path: "~{{ ansible_user }}/.kube"
+    state: directory
+    owner: "{{ ansible_user }}"
+    mode: "0700"
+
+- name: Give the Ansible user kubectl access on the node
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "~{{ ansible_user }}/.kube/config"
+    remote_src: true
+    owner: "{{ ansible_user }}"
+    mode: "0600"
+
 - name: Wait for the API server behind the VIP
   ansible.builtin.uri:
     url: "https://{{ k8s_vip }}:{{ k8s_api_port }}/readyz"

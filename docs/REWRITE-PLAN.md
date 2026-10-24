@@ -26,7 +26,7 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
 7. [x] Role `control_plane`: init first node, join the rest (VIP failover verified on the stand)
 8. [x] Role `workers`: join
 9. [x] Role `cilium` with Gateway API (kube-proxy replacement; LoadBalancer IPs for Gateways via Cilium LB IPAM + L2 announcements still to do)
-10. [ ] Addons: cert-manager, metrics-server
+10. [x] Addons: cert-manager, metrics-server (metrics-server uses --kubelet-insecure-tls until kubelet serving certs are CA-signed)
 11. [ ] Playbooks `upgrade.yml` (node by node) and `reset.yml`
 12. [ ] Tests: ansible-lint, molecule, local VM stand (3 control plane + 1 worker)
 13. [ ] English docs: README, architecture diagram (archify), quickstart, variables, upgrade, troubleshooting
