@@ -87,7 +87,8 @@ the cluster CA.
 ## An upgrade stopped and a node is cordoned
 
 This is intended. The error message names the failed task. Fix the cause and run `upgrade.yml`
-again, or `kubectl uncordon <node>` to keep the node as it is. kube-vip is restored even on failure;
+again, or `kubectl uncordon <node>` to keep the node as it is. A re-run skips nodes whose kubelet
+is already upgraded, so a node that failed at the very end has to be uncordoned by hand. kube-vip is restored even on failure;
 check that `/etc/kubernetes/manifests/kube-vip.yaml` exists on the control plane nodes.
 
 ## Starting over

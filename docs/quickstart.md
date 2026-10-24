@@ -9,8 +9,8 @@ Nodes:
 - 2 CPU and 2 GiB of RAM at least per node; 4 GiB is more comfortable.
 - All nodes in one L2 network: kube-vip announces the API address with ARP.
 - SSH access with a user that can `sudo` without a password.
-- Internet access to pkgs.k8s.io, github.com, ghcr.io, registry.k8s.io, quay.io and the Helm chart
-  repositories (no offline mode yet).
+- Internet access to pkgs.k8s.io, github.com (with its release download hosts), get.helm.sh, ghcr.io,
+  registry.k8s.io, quay.io and the Helm chart repositories (no offline mode yet).
 
 One free address in the same network for the API endpoint (`k8s_vip`). It must not belong to any
 node and must be outside the DHCP range.
@@ -48,14 +48,15 @@ all:
             worker1: {ansible_host: 10.0.0.21}
 ```
 
-The inventory hostname becomes the Kubernetes node name. In `group_vars/all.yml` set at least:
+The inventory hostname becomes the Kubernetes node name. `group_vars/all.yml` from the example holds
+every required variable; keep them all and adjust at least:
 
 ```yaml
 k8s_vip: 10.0.0.10          # free address for the API server
-k8s_vip_interface: eth0     # interface that carries the node addresses on the control plane nodes
+k8s_vip_interface: eth1     # interface that carries the node addresses on the control plane nodes
 ```
 
-`k8s_node_ip` defaults to `ansible_host`. Set it per host if Ansible reaches the nodes over a
+`k8s_node_ip` is `{{ ansible_host }}` in the example. Set it per host if Ansible reaches the nodes over a
 different network than the one the cluster should use. All variables are described in
 [variables.md](variables.md).
 
@@ -91,8 +92,8 @@ certificate key, workers with a fresh token. Keep the number of control plane no
 ansible-playbook -i inventory/mycluster/hosts.yml reset.yml -e reset_confirm=true
 ```
 
-This runs `kubeadm reset`, deletes the cluster state and reboots the nodes to drop the Cilium
-datapath. Packages and containerd stay, so the next `site.yml` run is faster.
+This runs `kubeadm reset`, deletes the cluster state, reboots the nodes to drop the Cilium datapath
+and removes the local `artifacts/admin.conf`. Packages and containerd stay, so the next `site.yml` run is faster.
 
 ## Local stand on Lima
 

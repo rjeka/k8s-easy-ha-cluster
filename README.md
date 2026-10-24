@@ -14,7 +14,7 @@ endpoint and Cilium as CNI with Gateway API.
 - containerd 2.x and runc from upstream releases, checksums verified, systemd cgroups.
 - Cilium with kube-proxy replacement and Gateway API CRDs.
 - Optional addons: metrics-server and cert-manager.
-- Rolling upgrades without API downtime, safe re-runs (a second run changes nothing) and recovery of half-joined nodes.
+- Rolling upgrades without API downtime (with three or more control plane nodes), safe re-runs (a second run changes nothing) and recovery of half-joined nodes.
 
 Supported nodes: Ubuntu 22.04 and 24.04 (Debian 12 is accepted but not tested yet) on amd64 or arm64.
 The machine running Ansible needs ansible-core 2.16 or newer.

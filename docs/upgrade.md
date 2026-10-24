@@ -15,7 +15,8 @@ minor version can be skipped.
    ansible-playbook -i inventory/mycluster/hosts.yml upgrade.yml
    ```
 
-5. Run `site.yml` once more. It should report no changes.
+5. Run `site.yml` once more. It records the new version in the kubeadm configuration on the first
+   control plane node; after that it reports no changes.
 
 `upgrade.yml` goes through the control plane nodes one at a time, the first one first, then through
 the workers in batches of `upgrade_workers_batch` (1 by default). On each node it:
@@ -23,15 +24,17 @@ the workers in batches of `upgrade_workers_batch` (1 by default). On each node i
 1. Checks that the target is at most one minor version ahead of the cluster.
 2. Switches the apt repository to the new minor version and upgrades kubeadm.
 3. On a control plane node, moves the VIP away: the kube-vip manifest is parked, the playbook waits
-   until another node holds the Lease and drops the address from the interface. The API stays
-   reachable through the VIP during the whole upgrade.
+   until another node holds the Lease and drops the address from the interface. With more than one
+   control plane node the API stays reachable through the VIP during the whole upgrade.
 4. Runs `kubeadm upgrade apply` on the first control plane node and `kubeadm upgrade node` on the
    others.
 5. Drains the node, upgrades kubelet and kubectl, holds the packages again and restarts kubelet.
 6. Waits for the node to become Ready and uncordons it.
 7. Puts the kube-vip manifest back, also when a step failed.
 
-Nodes that already run the target version are skipped, so a failed upgrade can simply be run again.
+Nodes whose kubelet already runs the target version are skipped, so after a failure `upgrade.yml`
+can be run again. A node that failed after its kubelet was upgraded (waiting for Ready or
+uncordoning) is skipped on that re-run and stays cordoned: check it and run `kubectl uncordon <node>`.
 
 If a step fails, the play stops on that node and reports which task failed. A drained node stays
 cordoned on purpose, so that workloads do not land on a half-upgraded kubelet. Fix the cause and run
@@ -49,10 +52,10 @@ to `upgrade.yml`, so a version bump never slips into an ordinary deploy.
   server-side apply. Read the Cilium upgrade notes first; Cilium supports upgrades between
   adjacent minor versions. For Gateway API, update `cilium_gateway_api_crds_sha256` as well.
 - containerd and runc binaries are replaced and containerd is restarted. Running containers keep
-  running, but upgrading node by node with a drain is safer:
-  `ansible-playbook site.yml --limit <node>`.
+  running. `site.yml` does not drain; for a careful rollout drain each node yourself and run
+  `ansible-playbook -i inventory/mycluster/hosts.yml site.yml --limit <node>`, then uncordon it.
 - kube-vip: the static pod manifest is rewritten and kubelet restarts the pod. Upgrade one control
-  plane node at a time with `--limit`.
+  plane node at a time with `--limit` (and `-i` for your inventory).
 
 ## etcd backup
 
