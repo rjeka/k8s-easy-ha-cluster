@@ -41,7 +41,8 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
 
 ## Test stand
 
-- Main stand: local VMs on the Mac (Apple Silicon, arm64) via Lima or Vagrant, real L2 so kube-vip ARP works.
+- Main stand: Lima on the Mac (arm64, Ubuntu 24.04), socket_vmnet shared network 192.168.105.0/24 for real L2 so kube-vip ARP works.
+  `stand/up.sh` creates k8s-master00..02 and k8s-worker00, `stand/down.sh` deletes them, inventory `inventory/lima`.
 - Hetzner Cloud as an optional second stand: billed even when powered off, so destroy instead of stop;
   private networks drop ARP for foreign IPs, so kube-vip ARP will not work there (use Hetzner LB).
 
