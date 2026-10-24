@@ -32,3 +32,8 @@
   roles:
     - kube_vip
     - control_plane
+
+- name: Workers
+  hosts: workers
+  roles:
+    - workers

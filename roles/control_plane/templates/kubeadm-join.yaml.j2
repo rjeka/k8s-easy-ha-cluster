@@ -12,11 +12,11 @@ nodeRegistration:
   criSocket: unix:///run/containerd/containerd.sock
   kubeletExtraArgs:
     - name: node-ip
-      value: {{ control_plane_node_ip }}
+      value: {{ k8s_node_ip }}
 {% if inventory_hostname in groups['control_plane'] %}
 controlPlane:
   localAPIEndpoint:
-    advertiseAddress: {{ control_plane_node_ip }}
+    advertiseAddress: {{ k8s_node_ip }}
     bindPort: {{ k8s_api_port }}
   certificateKey: {{ control_plane_certificate_key }}
 {% endif %}

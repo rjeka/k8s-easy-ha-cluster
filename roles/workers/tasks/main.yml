@@ -1,0 +1,32 @@
+---
+- name: Check whether this node has joined the cluster
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: workers_kubelet_conf
+
+- name: Join the cluster
+  when: not workers_kubelet_conf.stat.exists
+  block:
+    - name: Get join parameters from the first control plane node
+      ansible.builtin.include_role:
+        name: control_plane
+        tasks_from: join_info.yml
+
+    - name: Write kubeadm join config
+      ansible.builtin.template:
+        src: "{{ role_path }}/../control_plane/templates/kubeadm-join.yaml.j2"
+        dest: /etc/kubernetes/kubeadm-config.yaml
+        mode: "0600"
+
+    # Workers do not touch etcd, so they join in parallel
+    - name: Run kubeadm join
+      ansible.builtin.command: kubeadm join --config /etc/kubernetes/kubeadm-config.yaml
+      changed_when: true
+
+- name: Label worker node
+  ansible.builtin.command: >-
+    kubectl --kubeconfig /etc/kubernetes/admin.conf
+    label node {{ inventory_hostname }} node-role.kubernetes.io/worker= --overwrite
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  register: workers_label
+  changed_when: "'not labeled' not in workers_label.stdout"

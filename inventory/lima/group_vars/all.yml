@@ -10,6 +10,10 @@ k8s_vip: 192.168.105.200
 k8s_vip_interface: lima0
 k8s_api_port: 6443
 
+# Node address for the API server and kubelet; nodes often have more than one
+# interface (Lima VMs share one NAT address on eth0)
+k8s_node_ip: "{{ ansible_host }}"
+
 k8s_pod_subnet: 10.244.0.0/16
 k8s_service_subnet: 10.96.0.0/12
 
