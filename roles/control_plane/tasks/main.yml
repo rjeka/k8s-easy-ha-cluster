@@ -8,36 +8,47 @@
   ansible.builtin.include_tasks: init.yml
   when: inventory_hostname == groups['control_plane'][0]
 
-# Ask the cluster rather than trusting local files: a failed join leaves
-# admin.conf behind without a working member
-- name: Check whether the node is registered in the cluster
-  ansible.builtin.command: >-
-    kubectl --kubeconfig /etc/kubernetes/admin.conf get node {{ inventory_hostname }} -o name
+# Membership is decided by etcd, not by local files or the Node object: a
+# failed join can leave admin.conf and a registered Node without a member.
+# Any error listing members fails the play instead of triggering a rejoin.
+- name: List etcd members
+  ansible.builtin.shell: >-
+    set -o pipefail;
+    crictl exec $(crictl ps -q --name etcd | head -1) etcdctl
+    --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt
+    --key /etc/kubernetes/pki/etcd/server.key member list -w json
+  args:
+    executable: /bin/bash
   delegate_to: "{{ groups['control_plane'][0] }}"
-  register: control_plane_registered
+  run_once: true
+  register: control_plane_etcd_members
   changed_when: false
-  failed_when: false
-  when: inventory_hostname != groups['control_plane'][0]
+
+- name: Find this node's etcd member
+  ansible.builtin.set_fact:
+    control_plane_etcd_member: "{{ (control_plane_etcd_members.stdout | from_json).members
+      | selectattr('peerURLs', 'contains', 'https://' ~ k8s_node_ip ~ ':2380') | first | default({}) }}"
 
 - name: Join the other control plane nodes
   ansible.builtin.include_tasks: join.yml
   when:
     - inventory_hostname != groups['control_plane'][0]
-    - control_plane_registered.rc != 0
+    # unstarted members have no name and no client URLs yet
+    - control_plane_etcd_member.clientURLs | default([]) | length == 0
 
 - name: Create kubeconfig directory for the Ansible user
   ansible.builtin.file:
-    path: "~{{ ansible_user }}/.kube"
+    path: "~{{ ansible_user | default(ansible_user_id) }}/.kube"
     state: directory
-    owner: "{{ ansible_user }}"
+    owner: "{{ ansible_user | default(ansible_user_id) }}"
     mode: "0700"
 
 - name: Give the Ansible user kubectl access on the node
   ansible.builtin.copy:
     src: /etc/kubernetes/admin.conf
-    dest: "~{{ ansible_user }}/.kube/config"
+    dest: "~{{ ansible_user | default(ansible_user_id) }}/.kube/config"
     remote_src: true
-    owner: "{{ ansible_user }}"
+    owner: "{{ ansible_user | default(ansible_user_id) }}"
     mode: "0600"
 
 - name: Wait for the API server behind the VIP

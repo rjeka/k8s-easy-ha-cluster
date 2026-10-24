@@ -3,33 +3,36 @@
   ansible.builtin.command: kubeadm reset --force
   changed_when: true
 
+# kubeadm join refuses a name whose Node still reports Ready; the node is no
+# etcd member at this point, so its old Node object is stale
+- name: Delete the stale Node object
+  ansible.builtin.command: >-
+    kubectl --kubeconfig /etc/kubernetes/admin.conf delete node {{ inventory_hostname }} --ignore-not-found
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  register: control_plane_node_delete
+  changed_when: control_plane_node_delete.stdout | length > 0
+
+# kube-vip dies with the static pods and leaves the VIP on the interface;
+# the node would then send the join to itself
+- name: Drop a stale VIP from the node
+  ansible.builtin.command: ip addr del {{ k8s_vip }}/32 dev {{ k8s_vip_interface }}
+  register: control_plane_vip_del
+  changed_when: control_plane_vip_del.rc == 0
+  failed_when: false
+
 # kubeadm adds the new etcd member before it is started; a failed join
 # leaves it behind and etcd then refuses the next attempt
-- name: List etcd members
-  ansible.builtin.shell: >-
-    set -o pipefail;
-    crictl exec $(crictl ps -q --name etcd | head -1) etcdctl
-    --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt
-    --key /etc/kubernetes/pki/etcd/server.key member list -w json
-  args:
-    executable: /bin/bash
-  delegate_to: "{{ groups['control_plane'][0] }}"
-  register: control_plane_etcd_members
-  changed_when: false
-
 - name: Remove the stale etcd member
   ansible.builtin.shell: >-
     set -o pipefail;
     crictl exec $(crictl ps -q --name etcd | head -1) etcdctl
     --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt
-    --key /etc/kubernetes/pki/etcd/server.key member remove {{ '%x' | format(item.ID) }}
+    --key /etc/kubernetes/pki/etcd/server.key
+    member remove {{ '%x' | format(control_plane_etcd_member.ID) }}
   args:
     executable: /bin/bash
   delegate_to: "{{ groups['control_plane'][0] }}"
-  loop: "{{ (control_plane_etcd_members.stdout | from_json).members
-            | selectattr('peerURLs', 'contains', 'https://' ~ k8s_node_ip ~ ':2380') }}"
-  loop_control:
-    label: "{{ '%x' | format(item.ID) }}"
+  when: control_plane_etcd_member | length > 0
   changed_when: true
 
 # kubeadm reset empties the static pod directory

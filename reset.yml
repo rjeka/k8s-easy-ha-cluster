@@ -29,7 +29,7 @@
         - /var/lib/etcd
         - /var/lib/kubelet
         - /var/lib/cni
-        - "~{{ ansible_user }}/.kube"
+        - "~{{ ansible_user | default(ansible_user_id) }}/.kube"
 
     # Cilium leaves BPF programs, interfaces and iptables chains behind
     - name: Reboot to drop Cilium datapath state

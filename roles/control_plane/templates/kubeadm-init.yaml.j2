@@ -10,7 +10,7 @@ nodeRegistration:
   kubeletExtraArgs:
     - name: node-ip
       value: {{ k8s_node_ip }}
-{% if cilium_kube_proxy_replacement %}
+{% if cilium_kube_proxy_replacement | bool %}
 skipPhases:
   - addon/kube-proxy
 {% endif %}
