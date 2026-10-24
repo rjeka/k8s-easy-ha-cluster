@@ -17,9 +17,9 @@ inventory must contain an odd number of control plane nodes.
 
 ## API endpoint
 
-Clients outside the control plane (worker kubelets, Cilium, the fetched admin kubeconfig) reach the
-API server through `k8s_vip:k8s_api_port`. Components on the control plane nodes (controller-manager,
-scheduler, kubelet) talk to their local API server. kubeadm writes the VIP as `controlPlaneEndpoint` and into the API
+Worker kubelets, Cilium, kube-vip, the kubelet of the first control plane node and the fetched admin
+kubeconfig reach the API server through `k8s_vip:k8s_api_port`. controller-manager and scheduler,
+and the kubelets of the joined control plane nodes, talk to their local API server. kubeadm writes the VIP as `controlPlaneEndpoint` and into the API
 server certificate.
 
 kube-vip runs on every control plane node in ARP mode with leader election through the
@@ -44,7 +44,7 @@ GatewayClass. Load balancer addresses for Gateways (LB IPAM, L2 announcements) a
 ## Deployment flow
 
 `site.yml` starts with a preflight on the Ansible host: ansible-core version, an odd number of
-control plane nodes and a `k8s_vip` that is a valid address not used by any node. Then four plays:
+control plane nodes and a `k8s_vip` that is a valid address and not the `ansible_host` of any node. Then four plays:
 
 1. All nodes: base packages, swap off, kernel modules and sysctl, chrony, containerd with runc,
    kubelet, kubeadm and kubectl from pkgs.k8s.io (pinned and held).

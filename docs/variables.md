@@ -10,8 +10,8 @@ the same file.
 and `k8s_kubeconfig_local_path`, in `group_vars/all.yml`: the preflight and `reset.yml` read them
 outside the node hosts.
 
-`ansible_user` is also required: it is the SSH user and the owner of `~/.kube/config` on the control
-plane nodes.
+`ansible_user` is the SSH user and the owner of `~/.kube/config` on the control plane nodes; without
+it the connecting user is used.
 
 ## Cluster
 
@@ -68,7 +68,7 @@ plane nodes.
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `kubeadm_repo_url` | pkgs.k8s.io for the minor version of `k8s_version` | Kubernetes apt repository; point it to a mirror if needed. |
+| `kubeadm_repo_url` | pkgs.k8s.io for the minor version of `k8s_version` | Kubernetes apt repository. A mirror must keep the trailing slash and serve `Release.key` under the same URL. |
 | `kubeadm_extra_packages` | `cri-tools` | Extra packages installed next to kubelet, kubeadm and kubectl. |
 
 ## Nodes
