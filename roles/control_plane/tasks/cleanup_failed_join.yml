@@ -1,0 +1,43 @@
+---
+- name: Reset the half-joined node
+  ansible.builtin.command: kubeadm reset --force
+  changed_when: true
+
+# kubeadm join refuses a name whose Node still reports Ready; the node is no
+# etcd member at this point, so its old Node object is stale
+- name: Delete the stale Node object
+  kubernetes.core.k8s:
+    kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+    kind: Node
+    name: "{{ inventory_hostname }}"
+    state: absent
+  delegate_to: localhost
+  become: false
+
+# kube-vip dies with the static pods and leaves the VIP on the interface;
+# the node would then send the join to itself
+- name: Drop a stale VIP from the node
+  ansible.builtin.command: ip addr del {{ k8s_vip }}/32 dev {{ k8s_vip_interface }}
+  register: control_plane_vip_del
+  changed_when: control_plane_vip_del.rc == 0
+  failed_when: false
+
+# kubeadm adds the new etcd member before it is started; a failed join
+# leaves it behind and etcd then refuses the next attempt
+- name: Remove the stale etcd member
+  ansible.builtin.shell: >-
+    set -o pipefail;
+    crictl exec $(crictl ps -q --name '^etcd$' --latest) etcdctl
+    --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt
+    --key /etc/kubernetes/pki/etcd/server.key
+    member remove {{ '%x' | format(control_plane_etcd_member.ID) }}
+  args:
+    executable: /bin/bash
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  when: control_plane_etcd_member | length > 0
+  changed_when: true
+
+# kubeadm reset empties the static pod directory
+- name: Restore the kube-vip static pod
+  ansible.builtin.include_role:
+    name: kube_vip

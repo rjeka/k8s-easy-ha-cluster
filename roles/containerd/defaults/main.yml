@@ -1,0 +1,9 @@
+---
+# Upstream release binaries: distro packages are too old for current
+# Kubernetes (Debian 12 ships containerd 1.6)
+containerd_version: "2.4.2"
+containerd_runc_version: "1.5.2"
+
+containerd_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_facts.architecture] }}"
+containerd_release_url: "https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}"
+containerd_download_dir: /var/cache/k8s-downloads

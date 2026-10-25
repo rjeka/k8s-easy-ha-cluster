@@ -1,0 +1,88 @@
+---
+- name: Download Helm
+  ansible.builtin.get_url:
+    url: "https://get.helm.sh/helm-v{{ cilium_helm_version }}-linux-{{ cilium_arch }}.tar.gz"
+    dest: "{{ cilium_download_dir }}/helm-v{{ cilium_helm_version }}-linux-{{ cilium_arch }}.tar.gz"
+    checksum: "sha256:https://get.helm.sh/helm-v{{ cilium_helm_version }}-linux-{{ cilium_arch }}.tar.gz.sha256sum"
+    mode: "0644"
+
+- name: Get installed Helm version
+  ansible.builtin.command: /usr/local/bin/helm version --short
+  register: cilium_helm_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install Helm
+  ansible.builtin.unarchive:
+    src: "{{ cilium_download_dir }}/helm-v{{ cilium_helm_version }}-linux-{{ cilium_arch }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    extra_opts: [--strip-components=1, "linux-{{ cilium_arch }}/helm"]
+  when: not cilium_helm_installed.stdout.startswith('v' ~ cilium_helm_version ~ '+')
+
+- name: Install Gateway API CRDs
+  when: cilium_gateway_api_enabled
+  vars:
+    cilium_gateway_api_installed_version: >-
+      {{ (cilium_gateway_api_installed.resources | default([]) | first | default({})).metadata.annotations
+         | default({}) | dict2items | selectattr('key', 'equalto', 'gateway.networking.k8s.io/bundle-version')
+         | map(attribute='value') | first | default('') }}
+  block:
+    - name: Get installed Gateway API version
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+        api_version: apiextensions.k8s.io/v1
+        kind: CustomResourceDefinition
+        name: gateways.gateway.networking.k8s.io
+      delegate_to: localhost
+      become: false
+      register: cilium_gateway_api_installed
+
+    # The k8s module reads src on the Ansible host, so the bundle lands there
+    - name: Download Gateway API CRDs
+      ansible.builtin.get_url:
+        url: "{{ cilium_gateway_api_crds }}"
+        dest: "{{ k8s_kubeconfig_local_path | dirname }}/gateway-api-v{{ cilium_gateway_api_version }}.yaml"
+        checksum: "sha256:{{ cilium_gateway_api_crds_sha256 }}"
+        mode: "0644"
+      delegate_to: localhost
+      become: false
+      when: cilium_gateway_api_installed_version != 'v' ~ cilium_gateway_api_version
+
+    # Cilium only enables its Gateway controller if the CRDs exist at start
+    - name: Apply Gateway API CRDs
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+        src: "{{ k8s_kubeconfig_local_path | dirname }}/gateway-api-v{{ cilium_gateway_api_version }}.yaml"
+        apply: true
+        # The bundle owns these fields; take them over from earlier managers
+        server_side_apply:
+          field_manager: k8s-easy-ha-cluster
+          force_conflicts: true
+      delegate_to: localhost
+      become: false
+      when: cilium_gateway_api_installed_version != 'v' ~ cilium_gateway_api_version
+
+- name: Install Cilium
+  kubernetes.core.helm:
+    name: cilium
+    chart_ref: cilium
+    chart_repo_url: https://helm.cilium.io/
+    chart_version: "{{ cilium_version }}"
+    release_namespace: kube-system
+    kubeconfig: "{{ cilium_kubeconfig }}"
+    values: "{{ lookup('ansible.builtin.template', 'values.yaml.j2') | from_yaml }}"
+    wait: true
+    timeout: 10m
+
+- name: Wait for all nodes to become Ready
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+    kind: Node
+    wait: true
+    wait_condition:
+      type: Ready
+      status: "True"
+    wait_timeout: 300
+  delegate_to: localhost
+  become: false

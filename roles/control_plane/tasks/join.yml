@@ -1,0 +1,20 @@
+---
+- name: Clean up a previous failed join
+  ansible.builtin.include_tasks: cleanup_failed_join.yml
+  when: control_plane_admin_conf.stat.exists or control_plane_etcd_member | length > 0
+
+- name: Get join parameters from the first control plane node
+  ansible.builtin.include_tasks: join_info.yml
+
+- name: Write kubeadm join config
+  ansible.builtin.template:
+    src: kubeadm-join.yaml.j2
+    dest: "{{ control_plane_kubeadm_config }}"
+    mode: "0600"
+  no_log: true
+
+# One node at a time so etcd never loses quorum while a member is added
+- name: Run kubeadm join
+  ansible.builtin.command: kubeadm join --config {{ control_plane_kubeadm_config }}
+  throttle: 1
+  changed_when: true

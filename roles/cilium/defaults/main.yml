@@ -1,0 +1,10 @@
+---
+cilium_helm_version: "4.3.1"
+cilium_gateway_api_version: "1.6.3"
+cilium_kubeconfig: /etc/kubernetes/admin.conf
+
+cilium_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_facts.architecture] }}"
+cilium_download_dir: /var/cache/k8s-downloads
+cilium_gateway_api_crds_sha256: 356c2b8e286a964dc20995435659ad1095386329974793af10bbfe3eff977fe5
+cilium_gateway_api_crds: >-
+  https://github.com/kubernetes-sigs/gateway-api/releases/download/v{{ cilium_gateway_api_version }}/standard-install.yaml

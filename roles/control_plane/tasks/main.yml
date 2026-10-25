@@ -1,0 +1,81 @@
+---
+- name: Check whether this node has joined the cluster
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: control_plane_admin_conf
+
+- name: Initialize the first control plane node
+  ansible.builtin.include_tasks: init.yml
+  when: inventory_hostname == groups['control_plane'][0]
+
+# Later tasks talk to the API from the Ansible host through the VIP with the
+# fetched admin kubeconfig, so it has to be in place before any join
+- name: Wait for the API server behind the VIP
+  ansible.builtin.uri:
+    url: "https://{{ k8s_vip }}:{{ k8s_api_port }}/readyz"
+    validate_certs: false
+  register: control_plane_readyz
+  until: control_plane_readyz.status == 200
+  retries: 30
+  delay: 5
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+- name: Fetch the admin kubeconfig to the Ansible host
+  ansible.builtin.include_tasks: fetch_kubeconfig.yml
+
+# Membership is decided by etcd, not by local files or the Node object: a
+# failed join can leave admin.conf and a registered Node without a member.
+# Any error listing members fails the play instead of triggering a rejoin.
+- name: List etcd members
+  ansible.builtin.shell: >-
+    set -o pipefail;
+    crictl exec $(crictl ps -q --name '^etcd$' --latest) etcdctl
+    --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt
+    --key /etc/kubernetes/pki/etcd/server.key member list -w json
+  args:
+    executable: /bin/bash
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  run_once: true
+  register: control_plane_etcd_members
+  changed_when: false
+
+- name: Find this node's etcd member
+  ansible.builtin.set_fact:
+    control_plane_etcd_member: "{{ (control_plane_etcd_members.stdout | from_json).members
+      | selectattr('peerURLs', 'contains', 'https://' ~ k8s_node_ip ~ ':2380') | first | default({}) }}"
+    control_plane_etcd_member_by_name: "{{ (control_plane_etcd_members.stdout | from_json).members
+      | selectattr('name', 'defined') | selectattr('name', 'equalto', inventory_hostname) | first | default({}) }}"
+
+# A started member with this name but another peer URL means k8s_node_ip is
+# wrong; treating the node as a failed join would reset a healthy member
+- name: Check that the node address matches its etcd member
+  ansible.builtin.assert:
+    that: control_plane_etcd_member_by_name | length == 0
+      or ('https://' ~ k8s_node_ip ~ ':2380') in control_plane_etcd_member_by_name.peerURLs
+    fail_msg: >-
+      etcd member {{ inventory_hostname }} uses {{ control_plane_etcd_member_by_name.peerURLs | default([]) | join(',') }},
+      but k8s_node_ip is {{ k8s_node_ip }}; fix k8s_node_ip before rerunning
+
+- name: Join the other control plane nodes
+  ansible.builtin.include_tasks: join.yml
+  when:
+    - inventory_hostname != groups['control_plane'][0]
+    # unstarted members have no name and no client URLs yet
+    - control_plane_etcd_member.clientURLs | default([]) | length == 0
+
+- name: Create kubeconfig directory for the Ansible user
+  ansible.builtin.file:
+    path: "~{{ ansible_user | default(ansible_user_id) }}/.kube"
+    state: directory
+    owner: "{{ ansible_user | default(ansible_user_id) }}"
+    mode: "0700"
+
+- name: Give the Ansible user kubectl access on the node
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "~{{ ansible_user | default(ansible_user_id) }}/.kube/config"
+    remote_src: true
+    owner: "{{ ansible_user | default(ansible_user_id) }}"
+    mode: "0600"

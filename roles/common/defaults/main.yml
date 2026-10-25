@@ -1,0 +1,22 @@
+---
+common_kernel_modules:
+  - overlay
+  - br_netfilter
+
+common_sysctl:
+  net.ipv4.ip_forward: 1
+  net.bridge.bridge-nf-call-iptables: 1
+  net.bridge.bridge-nf-call-ip6tables: 1
+
+# chrony keeps etcd and certificate checks happy; set your own servers if
+# the nodes have no internet access
+common_ntp_servers: []
+
+common_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gpg
+  - conntrack
+  - socat
+  - chrony

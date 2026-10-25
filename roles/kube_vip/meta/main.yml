@@ -1,0 +1,13 @@
+---
+galaxy_info:
+  role_name: kube_vip
+  author: rjeka
+  description: kube-vip static pod announcing the API VIP via ARP
+  license: MIT
+  min_ansible_version: "2.16"
+  platforms:
+    - name: Ubuntu
+      versions: [jammy, noble]
+    - name: Debian
+      versions: [bookworm]
+dependencies: []

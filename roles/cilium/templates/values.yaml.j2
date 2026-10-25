@@ -1,0 +1,10 @@
+# Talk to the API through the VIP: with kube-proxy replaced there is no
+# kubernetes Service routing until Cilium itself is up
+k8sServiceHost: {{ k8s_vip }}
+k8sServicePort: {{ k8s_api_port }}
+kubeProxyReplacement: {{ cilium_kube_proxy_replacement | bool | lower }}
+# Use the per-node podCIDRs that kubeadm carves out of k8s_pod_subnet
+ipam:
+  mode: kubernetes
+gatewayAPI:
+  enabled: {{ cilium_gateway_api_enabled | bool | lower }}

@@ -1,0 +1,57 @@
+---
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master, ansible-rewrite]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install tools
+        run: pip install ansible-core ansible-lint yamllint -r requirements.txt
+      - name: Install collections
+        run: ansible-galaxy collection install -r requirements.yml -p collections
+      - name: yamllint
+        run: yamllint .
+      - name: ansible-lint
+        run: ansible-lint
+      - name: Syntax check
+        run: |
+          for playbook in site.yml upgrade.yml reset.yml tests/node-roles.yml; do
+            ansible-playbook --syntax-check "$playbook"
+          done
+
+  # Node roles on a real VM per supported OS and architecture, run twice to
+  # prove idempotence. The full cluster is tested on the Lima stand.
+  node-roles:
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-22.04, ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Ansible
+        run: pip install ansible-core
+      - name: Install collections
+        run: ansible-galaxy collection install -r requirements.yml -p collections
+      - name: Apply node roles
+        run: ansible-playbook -i localhost, tests/node-roles.yml
+      - name: Apply again, expect no changes
+        run: |
+          ansible-playbook -i localhost, tests/node-roles.yml | tee second-run.log
+          grep -qE 'changed=0 +unreachable=0 +failed=0' second-run.log

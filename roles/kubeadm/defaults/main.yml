@@ -1,0 +1,11 @@
+---
+kubeadm_packages:
+  - kubelet
+  - kubeadm
+  - kubectl
+
+# Versioned separately from Kubernetes and no longer pulled in by kubeadm
+kubeadm_extra_packages:
+  - cri-tools
+
+kubeadm_repo_url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_version | regex_replace('^(\\d+\\.\\d+).*$', '\\1') }}/deb/"

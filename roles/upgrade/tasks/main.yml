@@ -1,0 +1,132 @@
+---
+- name: Fetch the admin kubeconfig to the Ansible host
+  ansible.builtin.include_role:
+    name: control_plane
+    tasks_from: fetch_kubeconfig.yml
+
+- name: Get kubelet version
+  ansible.builtin.command: kubelet --version
+  register: upgrade_kubelet_version
+  changed_when: false
+
+- name: Upgrade the node
+  when: upgrade_kubelet_version.stdout != 'Kubernetes v' ~ k8s_version
+  block:
+    # /version is public; k8s_cluster_info would also walk API discovery,
+    # which fails while the control plane runs mixed versions
+    - name: Get cluster version
+      ansible.builtin.uri:
+        url: "https://{{ k8s_vip }}:{{ k8s_api_port }}/version"
+        validate_certs: false
+      delegate_to: localhost
+      become: false
+      register: upgrade_cluster_version
+
+    # kubeadm upgrades one minor version at a time
+    - name: Check upgrade path
+      ansible.builtin.assert:
+        that:
+          - _target is version(_current, '>=')
+          - (_target.split('.')[1] | int) - (_current.split('.')[1] | int) <= 1
+        fail_msg: "Cannot go from {{ _current }} to {{ _target }}: one minor version at a time"
+      vars:
+        _current: "{{ upgrade_cluster_version.json.gitVersion | regex_replace('^v', '') }}"
+        _target: "{{ k8s_version }}"
+
+    - name: Switch the Kubernetes apt repository
+      ansible.builtin.include_role:
+        name: kubeadm
+        tasks_from: repo.yml
+
+    - name: Upgrade kubeadm
+      ansible.builtin.apt:
+        name: "kubeadm={{ k8s_version }}-*"
+        update_cache: true
+        allow_change_held_packages: true
+
+    # kube-vip would keep the VIP here while the API server restarts; with
+    # its static pod gone it releases the lease and another node takes over
+    - name: Hand the VIP to another control plane node
+      ansible.builtin.include_tasks: vip_away.yml
+      when:
+        - inventory_hostname in groups['control_plane']
+        - groups['control_plane'] | length > 1
+
+    - name: Upgrade the control plane (first node)
+      ansible.builtin.command: kubeadm upgrade apply v{{ k8s_version }} --yes
+      when: inventory_hostname == groups['control_plane'][0]
+      changed_when: true
+
+    - name: Upgrade the node configuration
+      ansible.builtin.command: kubeadm upgrade node
+      when: inventory_hostname != groups['control_plane'][0]
+      changed_when: true
+
+    - name: Drain the node
+      kubernetes.core.k8s_drain:
+        kubeconfig: "{{ upgrade_kubeconfig }}"
+        name: "{{ inventory_hostname }}"
+        state: drain
+        delete_options:
+          ignore_daemonsets: true
+          delete_emptydir_data: true
+          wait_timeout: "{{ upgrade_drain_timeout }}"
+      delegate_to: localhost
+      become: false
+
+    - name: Upgrade kubelet and kubectl
+      ansible.builtin.apt:
+        name:
+          - "kubelet={{ k8s_version }}-*"
+          - "kubectl={{ k8s_version }}-*"
+        allow_change_held_packages: true
+
+    - name: Hold Kubernetes packages
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop: [kubelet, kubeadm, kubectl]
+
+    - name: Restart kubelet
+      ansible.builtin.systemd_service:
+        name: kubelet
+        state: restarted
+        daemon_reload: true
+
+    - name: Wait for the node to become Ready
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ upgrade_kubeconfig }}"
+        kind: Node
+        name: "{{ inventory_hostname }}"
+        wait: true
+        wait_condition:
+          type: Ready
+          status: "True"
+        wait_timeout: 300
+      delegate_to: localhost
+      become: false
+
+    - name: Uncordon the node
+      kubernetes.core.k8s_drain:
+        kubeconfig: "{{ upgrade_kubeconfig }}"
+        name: "{{ inventory_hostname }}"
+        state: uncordon
+      delegate_to: localhost
+      become: false
+
+  # A node that failed halfway stays cordoned on purpose: workloads must not
+  # land on a half-upgraded kubelet. Fix it, rerun upgrade.yml or uncordon.
+  rescue:
+    - name: Report the cordoned node
+      ansible.builtin.fail:
+        msg: >-
+          Upgrade of {{ inventory_hostname }} failed at '{{ ansible_failed_task.name }}'.
+          If it was drained it stays cordoned; fix the cause and rerun upgrade.yml, or run
+          kubectl uncordon {{ inventory_hostname }} to accept it as is.
+
+  # Also on failure: never leave a control plane node without kube-vip
+  always:
+    - name: Bring kube-vip back
+      ansible.builtin.command: mv {{ upgrade_kube_vip_parked }} {{ upgrade_kube_vip_manifest }}
+      args:
+        removes: "{{ upgrade_kube_vip_parked }}"

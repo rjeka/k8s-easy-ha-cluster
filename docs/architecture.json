@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "k8s-easy-ha-cluster",
+    "locale": "en",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "kubectl",
+      "type": "external",
+      "label": "kubectl",
+      "sublabel": "artifacts/admin.conf",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "ansible",
+      "type": "external",
+      "label": "Ansible host",
+      "sublabel": "site.yml / upgrade.yml",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "vip",
+      "type": "security",
+      "label": "API VIP",
+      "sublabel": "k8s_vip:6443",
+      "tag": "kube-vip ARP",
+      "pos": [
+        290,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "cp0",
+      "type": "backend",
+      "label": "Control plane 1",
+      "sublabel": "apiserver, etcd, kube-vip",
+      "tag": "Lease holder",
+      "pos": [
+        560,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cp1",
+      "type": "backend",
+      "label": "Control plane 2",
+      "sublabel": "apiserver, etcd, kube-vip",
+      "pos": [
+        560,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cp2",
+      "type": "backend",
+      "label": "Control plane 3",
+      "sublabel": "apiserver, etcd, kube-vip",
+      "pos": [
+        560,
+        300
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "stacked, one member per node",
+      "pos": [
+        860,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cilium",
+      "type": "messagebus",
+      "label": "Cilium",
+      "sublabel": "CNI, no kube-proxy, Gateway API",
+      "pos": [
+        560,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Workers",
+      "sublabel": "containerd, kubelet",
+      "pos": [
+        860,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Nodes: one L2 network",
+      "wraps": [
+        "vip",
+        "cp0",
+        "cp1",
+        "cp2",
+        "etcd",
+        "cilium",
+        "worker"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "control_plane (odd count)",
+      "wraps": [
+        "cp0",
+        "cp1",
+        "cp2",
+        "etcd"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "kubectl-to-vip",
+      "from": "kubectl",
+      "to": "vip",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vip-to-cp0",
+      "from": "vip",
+      "to": "cp0",
+      "label": "active",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "vip-to-cp1",
+      "from": "vip",
+      "to": "cp1",
+      "label": "failover",
+      "variant": "dashed"
+    },
+    {
+      "id": "vip-to-cp2",
+      "from": "vip",
+      "to": "cp2",
+      "label": "failover",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "cp1-to-etcd",
+      "from": "cp1",
+      "to": "etcd",
+      "label": "quorum"
+    },
+    {
+      "id": "ansible-to-cilium",
+      "from": "ansible",
+      "to": "cilium",
+      "label": "SSH, kubeadm, Helm"
+    },
+    {
+      "id": "cilium-to-worker",
+      "from": "cilium",
+      "to": "worker",
+      "label": "pod network"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "API endpoint",
+      "items": [
+        "kube-vip leader answers ARP for the VIP",
+        "Lease plndr-cp-lock moves it in about 15 s",
+        "Upgrades hand the VIP off before restarting the API"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Control plane",
+      "items": [
+        "kubeadm init on the first node",
+        "Others join one at a time",
+        "Membership decided from the etcd member list"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Data plane",
+      "items": [
+        "containerd 2.x with systemd cgroups",
+        "Cilium replaces kube-proxy, talks to the API via the VIP",
+        "Gateway API CRDs and the cilium GatewayClass"
+      ]
+    }
+  ]
+}

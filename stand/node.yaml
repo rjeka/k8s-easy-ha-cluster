@@ -1,0 +1,33 @@
+---
+# Lima template for one stand node. stand/up.sh passes the static address
+# through the StaticIP param.
+base: template:ubuntu-24.04
+cpus: 2
+memory: 4GiB
+disk: 20GiB
+# Lima installs nerdctl + containerd by default; the containerd role owns that
+containerd:
+  system: false
+  user: false
+networks:
+  # socket_vmnet shared network, real L2 between VMs so kube-vip ARP works
+  - lima: shared
+param:
+  StaticIP: ""
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eu
+      cat > /etc/netplan/60-stand.yaml <<NETPLAN
+      network:
+        version: 2
+        ethernets:
+          lima0:
+            # only the static address: etcd checks the source IP against
+            # the peer certificate, a second DHCP address breaks joins
+            dhcp4: false
+            addresses: [{{.Param.StaticIP}}/24]
+      NETPLAN
+      chmod 600 /etc/netplan/60-stand.yaml
+      netplan apply

@@ -1,0 +1,46 @@
+---
+# Tear the cluster down and return the nodes to the state after the node
+# roles (packages and containerd stay). Destroys all cluster data.
+- name: Confirm reset
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Require explicit confirmation
+      ansible.builtin.assert:
+        that: reset_confirm | default(false) | bool
+        fail_msg: "This wipes the cluster; run with -e reset_confirm=true"
+
+- name: Reset nodes
+  hosts: k8s_cluster
+  tasks:
+    - name: Run kubeadm reset
+      ansible.builtin.command: kubeadm reset --force
+      changed_when: true
+      failed_when: false
+
+    - name: Remove cluster state
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/cni/net.d
+        - /etc/kubernetes
+        - /var/lib/etcd
+        - /var/lib/kubelet
+        - /var/lib/cni
+        - "~{{ ansible_user | default(ansible_user_id) }}/.kube"
+
+    # Cilium leaves BPF programs, interfaces and iptables chains behind
+    - name: Reboot to drop Cilium datapath state
+      ansible.builtin.reboot:
+
+- name: Remove local kubeconfig
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Remove fetched admin.conf
+      ansible.builtin.file:
+        path: "{{ hostvars[groups['control_plane'][0]].k8s_kubeconfig_local_path }}"
+        state: absent

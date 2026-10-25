@@ -1,0 +1,81 @@
+---
+# A worker counts as joined only with both a registered Node and a local
+# kubelet.conf: a failed join can leave kubelet.conf without a Node, and a
+# reinstalled machine leaves a stale Node without kubelet.conf.
+- name: Fetch the admin kubeconfig to the Ansible host
+  ansible.builtin.include_role:
+    name: control_plane
+    tasks_from: fetch_kubeconfig.yml
+
+- name: Check for kubelet.conf
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: workers_kubelet_conf
+
+# An unreachable API fails the task instead of triggering a rejoin
+- name: Check whether the node is registered in the cluster
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+    kind: Node
+    name: "{{ inventory_hostname }}"
+  delegate_to: localhost
+  become: false
+  register: workers_registered
+
+- name: Join the cluster
+  when: workers_registered.resources | length == 0 or not workers_kubelet_conf.stat.exists
+  block:
+    - name: Remove the stale Node of a reinstalled machine
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+        kind: Node
+        name: "{{ inventory_hostname }}"
+        state: absent
+      delegate_to: localhost
+      become: false
+
+    - name: Clean up a previous failed join
+      ansible.builtin.command: kubeadm reset --force
+      changed_when: true
+
+    - name: Get join parameters from the first control plane node
+      ansible.builtin.include_role:
+        name: control_plane
+        tasks_from: join_info.yml
+
+    - name: Write kubeadm join config
+      ansible.builtin.template:
+        src: "{{ role_path }}/../control_plane/templates/kubeadm-join.yaml.j2"
+        dest: /etc/kubernetes/kubeadm-config.yaml
+        mode: "0600"
+      no_log: true
+
+    # Workers do not touch etcd, so they join in parallel
+    - name: Run kubeadm join
+      ansible.builtin.command: kubeadm join --config /etc/kubernetes/kubeadm-config.yaml
+      changed_when: true
+
+# kubeadm join returns before the Node object is registered, and patching
+# a missing Node only warns
+- name: Wait for the Node object
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+    kind: Node
+    name: "{{ inventory_hostname }}"
+    wait: true
+    wait_timeout: 120
+  delegate_to: localhost
+  become: false
+
+- name: Label worker node
+  kubernetes.core.k8s:
+    kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+    kind: Node
+    name: "{{ inventory_hostname }}"
+    state: patched
+    definition:
+      metadata:
+        labels:
+          node-role.kubernetes.io/worker: ""
+  delegate_to: localhost
+  become: false

@@ -1,0 +1,35 @@
+---
+# Kubernetes version (pinned and held); packages come from
+# pkgs.k8s.io/core:/stable:/v<minor>
+k8s_version: "1.37.1"
+k8s_cluster_name: kubernetes
+
+# Control plane endpoint. kube-vip announces this address via ARP on the
+# control plane nodes; it must be a free address in the nodes' L2 network.
+k8s_vip: 192.168.105.200
+k8s_vip_interface: lima0
+k8s_api_port: 6443
+
+# Node address for the API server and kubelet; nodes often have more than one
+# interface (Lima VMs share one NAT address on eth0)
+k8s_node_ip: "{{ ansible_host }}"
+
+k8s_pod_subnet: 10.244.0.0/16
+k8s_service_subnet: 10.96.0.0/12
+
+containerd_version: "2.4.2"
+containerd_runc_version: "1.5.2"
+
+kube_vip_version: v1.3.1
+
+cilium_version: 1.20.4
+cilium_gateway_api_enabled: true
+# Cilium replaces kube-proxy; kubeadm then skips the kube-proxy addon
+cilium_kube_proxy_replacement: true
+
+# Optional addons
+addon_cert_manager_enabled: true
+addon_metrics_server_enabled: true
+
+# Where to put the admin kubeconfig on the machine running Ansible
+k8s_kubeconfig_local_path: "{{ inventory_dir }}/artifacts/admin.conf"

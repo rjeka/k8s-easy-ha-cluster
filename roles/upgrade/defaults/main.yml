@@ -1,0 +1,6 @@
+---
+upgrade_kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+# seconds
+upgrade_drain_timeout: 300
+upgrade_kube_vip_manifest: /etc/kubernetes/manifests/kube-vip.yaml
+upgrade_kube_vip_parked: /etc/kubernetes/kube-vip.yaml.parked

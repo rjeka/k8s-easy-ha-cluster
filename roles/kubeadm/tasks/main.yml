@@ -1,0 +1,35 @@
+---
+- name: Get installed kubeadm version
+  ansible.builtin.command: kubeadm version -o short
+  register: kubeadm_installed
+  changed_when: false
+  failed_when: false
+
+# Bumping k8s_version in site.yml would swap kubelet under a running node
+- name: Refuse to change the Kubernetes version outside upgrade.yml
+  ansible.builtin.assert:
+    that: kubeadm_installed.rc != 0 or kubeadm_installed.stdout == 'v' ~ k8s_version
+    fail_msg: >-
+      {{ inventory_hostname }} runs kubeadm {{ kubeadm_installed.stdout }}, k8s_version is
+      {{ k8s_version }}; run upgrade.yml to change the cluster version
+
+- name: Add Kubernetes apt repository
+  ansible.builtin.include_tasks: repo.yml
+
+- name: Install Kubernetes packages
+  ansible.builtin.apt:
+    name: "{{ kubeadm_packages | map('regex_replace', '$', '=' ~ k8s_version ~ '-*') | list + kubeadm_extra_packages }}"
+    state: present
+    update_cache: true
+    allow_change_held_packages: true
+
+- name: Hold Kubernetes packages
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop: "{{ kubeadm_packages }}"
+
+- name: Enable kubelet
+  ansible.builtin.systemd_service:
+    name: kubelet
+    enabled: true

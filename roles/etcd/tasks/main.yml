@@ -1,9 +1,0 @@
-- include_tasks: tls.yml
-  tags:
-    - ssl
-    - copy
-
-- include_tasks: etcd.yml
-  tags: etcd
-
-

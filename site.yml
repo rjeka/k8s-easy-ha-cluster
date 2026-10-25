@@ -1,0 +1,46 @@
+---
+- name: Preflight checks
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Check Ansible version
+      ansible.builtin.assert:
+        that: ansible_version.full is version('2.16', '>=')
+        fail_msg: "ansible-core 2.16 or newer is required"
+
+    - name: Check inventory layout
+      ansible.builtin.assert:
+        that:
+          - groups['control_plane'] | default([]) | length > 0
+          - groups['control_plane'] | length is odd
+          - k8s_vip is defined and k8s_vip is ansible.utils.ip_address
+          - k8s_vip not in (groups['k8s_cluster'] | map('extract', hostvars) | selectattr('ansible_host', 'defined')
+            | map(attribute='ansible_host') | list)
+        fail_msg: >-
+          control_plane needs an odd number of hosts and k8s_vip must be a
+          valid address that is not used by any node
+
+- name: Prepare nodes
+  hosts: k8s_cluster
+  roles:
+    - common
+    - containerd
+    - kubeadm
+
+- name: Control plane
+  hosts: control_plane
+  roles:
+    - kube_vip
+    - control_plane
+
+- name: Workers
+  hosts: workers
+  roles:
+    - workers
+
+- name: Cluster network
+  hosts: control_plane[0]
+  roles:
+    - cilium
+    - addons

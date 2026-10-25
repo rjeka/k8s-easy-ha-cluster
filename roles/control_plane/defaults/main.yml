@@ -1,0 +1,2 @@
+---
+control_plane_kubeadm_config: /etc/kubernetes/kubeadm-config.yaml
