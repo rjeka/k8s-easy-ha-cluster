@@ -22,7 +22,22 @@
 
 - name: Install Gateway API CRDs
   when: cilium_gateway_api_enabled
+  vars:
+    cilium_gateway_api_installed_version: >-
+      {{ (cilium_gateway_api_installed.resources | default([]) | first | default({})).metadata.annotations
+         | default({}) | dict2items | selectattr('key', 'equalto', 'gateway.networking.k8s.io/bundle-version')
+         | map(attribute='value') | first | default('') }}
   block:
+    - name: Get installed Gateway API version
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+        api_version: apiextensions.k8s.io/v1
+        kind: CustomResourceDefinition
+        name: gateways.gateway.networking.k8s.io
+      delegate_to: localhost
+      become: false
+      register: cilium_gateway_api_installed
+
     # The k8s module reads src on the Ansible host, so the bundle lands there
     - name: Download Gateway API CRDs
       ansible.builtin.get_url:
@@ -32,6 +47,7 @@
         mode: "0644"
       delegate_to: localhost
       become: false
+      when: cilium_gateway_api_installed_version != 'v' ~ cilium_gateway_api_version
 
     # Cilium only enables its Gateway controller if the CRDs exist at start
     - name: Apply Gateway API CRDs
@@ -45,6 +61,7 @@
           force_conflicts: true
       delegate_to: localhost
       become: false
+      when: cilium_gateway_api_installed_version != 'v' ~ cilium_gateway_api_version
 
 - name: Install Cilium
   kubernetes.core.helm:
