@@ -37,8 +37,8 @@ kubectl -n kube-system get lease plndr-cp-lock -o jsonpath='{.spec.holderIdentit
 ## Down
 
 ```sh
-limactl stop k8s-master00 k8s-master01 k8s-master02 k8s-worker00   # keep the VMs
-stand/down.sh                                                      # delete them
+for vm in k8s-master00 k8s-master01 k8s-master02 k8s-worker00; do limactl stop "$vm"; done   # keep the VMs
+stand/down.sh   # delete them
 ```
 
 ## Known stand issues
