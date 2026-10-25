@@ -28,8 +28,8 @@ for the API endpoint, Cilium with Gateway API. User docs are in `README.md` and 
 - Control plane membership is decided from the etcd member list, never from local files or the
   Node object. Any change that can reset a node must fail closed when etcd cannot be queried.
 - Upgrades must not drop the API: the VIP is moved off a control plane node before it is upgraded.
-- Supported: Ubuntu 22.04/24.04, Debian 12; amd64 and arm64. Do not add distribution-specific
-  branches without a way to test them.
+- Supported: Ubuntu 22.04/24.04 on amd64 and arm64; Debian 12 passes the OS check but is not tested
+  yet. Do not add distribution-specific branches without a way to test them.
 - Docs and comments are in English. Keep `docs/` in sync with behaviour changes in the same commit.
 
 ## Checks
