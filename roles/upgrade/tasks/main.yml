@@ -1,4 +1,9 @@
 ---
+- name: Fetch the admin kubeconfig to the Ansible host
+  ansible.builtin.include_role:
+    name: control_plane
+    tasks_from: fetch_kubeconfig.yml
+
 - name: Get kubelet version
   ansible.builtin.command: kubelet --version
   register: upgrade_kubelet_version

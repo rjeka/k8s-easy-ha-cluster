@@ -2,6 +2,11 @@
 # A worker counts as joined only with both a registered Node and a local
 # kubelet.conf: a failed join can leave kubelet.conf without a Node, and a
 # reinstalled machine leaves a stale Node without kubelet.conf.
+- name: Fetch the admin kubeconfig to the Ansible host
+  ansible.builtin.include_role:
+    name: control_plane
+    tasks_from: fetch_kubeconfig.yml
+
 - name: Check for kubelet.conf
   ansible.builtin.stat:
     path: /etc/kubernetes/kubelet.conf
@@ -31,8 +36,7 @@
 
     - name: Clean up a previous failed join
       ansible.builtin.command: kubeadm reset --force
-      args:
-        removes: /etc/kubernetes/kubelet.conf
+      changed_when: true
 
     - name: Get join parameters from the first control plane node
       ansible.builtin.include_role:
@@ -50,6 +54,18 @@
     - name: Run kubeadm join
       ansible.builtin.command: kubeadm join --config /etc/kubernetes/kubeadm-config.yaml
       changed_when: true
+
+# kubeadm join returns before the Node object is registered, and patching
+# a missing Node only warns
+- name: Wait for the Node object
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+    kind: Node
+    name: "{{ inventory_hostname }}"
+    wait: true
+    wait_timeout: 120
+  delegate_to: localhost
+  become: false
 
 - name: Label worker node
   kubernetes.core.k8s:

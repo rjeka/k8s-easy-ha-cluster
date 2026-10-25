@@ -22,30 +22,8 @@
   become: false
   run_once: true
 
-- name: Create local artifacts directory
-  ansible.builtin.file:
-    path: "{{ k8s_kubeconfig_local_path | dirname }}"
-    state: directory
-    mode: "0700"
-  delegate_to: localhost
-  become: false
-  run_once: true
-
-- name: Fetch admin kubeconfig
-  ansible.builtin.fetch:
-    src: /etc/kubernetes/admin.conf
-    dest: "{{ k8s_kubeconfig_local_path }}"
-    flat: true
-  delegate_to: "{{ groups['control_plane'][0] }}"
-  run_once: true
-
-- name: Restrict local admin kubeconfig
-  ansible.builtin.file:
-    path: "{{ k8s_kubeconfig_local_path }}"
-    mode: "0600"
-  delegate_to: localhost
-  become: false
-  run_once: true
+- name: Fetch the admin kubeconfig to the Ansible host
+  ansible.builtin.include_tasks: fetch_kubeconfig.yml
 
 # Membership is decided by etcd, not by local files or the Node object: a
 # failed join can leave admin.conf and a registered Node without a member.

@@ -2,31 +2,6 @@
 # Upgrade the cluster to k8s_version: bump it in group_vars, then run this.
 # Nodes go one at a time, the first control plane node first.
 # The cluster API is used from the Ansible host through the VIP.
-- name: Fetch the admin kubeconfig
-  hosts: control_plane[0]
-  gather_facts: false
-  tasks:
-    - name: Create local artifacts directory
-      ansible.builtin.file:
-        path: "{{ k8s_kubeconfig_local_path | dirname }}"
-        state: directory
-        mode: "0700"
-      delegate_to: localhost
-      become: false
-
-    - name: Fetch admin kubeconfig
-      ansible.builtin.fetch:
-        src: /etc/kubernetes/admin.conf
-        dest: "{{ k8s_kubeconfig_local_path }}"
-        flat: true
-
-    - name: Restrict local admin kubeconfig
-      ansible.builtin.file:
-        path: "{{ k8s_kubeconfig_local_path }}"
-        mode: "0600"
-      delegate_to: localhost
-      become: false
-
 - name: Upgrade control plane nodes
   hosts: control_plane
   serial: 1
