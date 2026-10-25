@@ -20,7 +20,8 @@ How to work:
    keys or rendered join configs with `no_log: true`.
 5. When you add or rename a variable, update `inventory/example`, `inventory/lima` and
    `docs/variables.md`. When behaviour changes, update the matching page in `docs/`.
-6. Run the `checks` skill (lint and syntax). Do not run playbooks against any inventory other than
-   `inventory/lima`; leave stand runs to the `stand-tester` agent unless asked.
+6. Run the `checks` skill (lint and syntax). Run playbooks only with `-i inventory/lima/hosts.yml`
+   (without `-i` ansible.cfg falls back to `inventory/example`); leave stand runs to the
+   `stand-tester` agent unless asked.
 
 Report what you changed (files and why), the check results, and what still needs a stand run.

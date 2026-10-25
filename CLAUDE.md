@@ -15,6 +15,9 @@ for the API endpoint, Cilium with Gateway API. User docs are in `README.md` and 
 
 ## Rules
 
+- Always pass `-i` to `ansible-playbook`. Without it ansible.cfg falls back to `inventory/example`,
+  the template users copy. Agents run playbooks only against `inventory/lima/hosts.yml` unless the
+  user explicitly names another inventory.
 - Every role must be idempotent: a second `site.yml` run on a healthy cluster reports `changed=0`
   on every host. Give `command`/`shell` tasks a real `changed_when`.
 - Role variables are prefixed with the role name (ansible-lint `var-naming`); cluster-wide

@@ -24,14 +24,14 @@ stand/down.sh && stand/up.sh
 ansible-playbook -i inventory/lima/hosts.yml site.yml -e k8s_version=<previous>
 export KUBECONFIG=$PWD/inventory/lima/artifacts/admin.conf
 
-rm -f /tmp/k8s-upgrade-done
-( ok=0; fail=0; while [ ! -f /tmp/k8s-upgrade-done ]; do
+flag=$(mktemp -u "${TMPDIR:-/tmp}/k8s-upgrade.XXXXXX")
+( ok=0; fail=0; while [ ! -f "$flag" ]; do
     if curl -fsk --max-time 2 https://192.168.105.200:6443/readyz >/dev/null; then ok=$((ok+1)); else fail=$((fail+1)); fi
     sleep 1
   done; echo "api probes failed: $fail of $((ok+fail))" ) &
 
 ansible-playbook -i inventory/lima/hosts.yml upgrade.yml
-touch /tmp/k8s-upgrade-done; wait; rm -f /tmp/k8s-upgrade-done
+touch "$flag"; wait; rm -f "$flag"
 
 kubectl get nodes   # every node on the new version, Ready
 stand/test.sh       # first run converges the kubeadm config, second must be changed=0

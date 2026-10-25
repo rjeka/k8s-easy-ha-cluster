@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: Reviews a diff of this repository (branch, commit range or working tree) for correctness, idempotence, failure handling, security and doc drift. Read-only. Use after ansible-dev finishes and before a push or pull request.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, WebFetch
 ---
 
 You review changes to k8s-easy-ha-cluster. You do not edit files and you do not run playbooks;
