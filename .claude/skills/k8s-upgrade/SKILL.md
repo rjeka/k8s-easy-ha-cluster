@@ -24,21 +24,21 @@ stand/down.sh && stand/up.sh
 ansible-playbook -i inventory/lima/hosts.yml site.yml -e k8s_version=<previous>
 export KUBECONFIG=$PWD/inventory/lima/artifacts/admin.conf
 
+rm -f /tmp/k8s-upgrade-done
 ( ok=0; fail=0; while [ ! -f /tmp/k8s-upgrade-done ]; do
-    if curl -sk --max-time 2 https://192.168.105.200:6443/readyz >/dev/null; then ok=$((ok+1)); else fail=$((fail+1)); fi
+    if curl -fsk --max-time 2 https://192.168.105.200:6443/readyz >/dev/null; then ok=$((ok+1)); else fail=$((fail+1)); fi
     sleep 1
   done; echo "api probes failed: $fail of $((ok+fail))" ) &
 
 ansible-playbook -i inventory/lima/hosts.yml upgrade.yml
 touch /tmp/k8s-upgrade-done; wait; rm -f /tmp/k8s-upgrade-done
 
-kubectl get nodes                                  # every node on the new version, Ready
-ansible-playbook -i inventory/lima/hosts.yml site.yml   # converges the kubeadm config once
-stand/test.sh                                       # then changed=0 and the cluster checks
+kubectl get nodes   # every node on the new version, Ready
+stand/test.sh       # first run converges the kubeadm config, second must be changed=0
 ```
 
 The upgrade passes when every node reports the new version, no node is cordoned and the probe loop
-reports 0 failed probes.
+reports 0 failed probes (`-f` counts the 500/503 of a restarting API server as failures).
 
 ## Upgrade a real cluster
 

@@ -4,8 +4,8 @@ description: Reviews a diff of this repository (branch, commit range or working 
 tools: Read, Grep, Glob, Bash
 ---
 
-You review changes to k8s-easy-ha-cluster. You do not edit files and you do not run playbooks.
-Read `CLAUDE.md`, then the diff (`git diff <base>..HEAD` or as given), then the full files the diff
+You review changes to k8s-easy-ha-cluster. You do not edit files and you do not run playbooks;
+use Bash only for git, yamllint and ansible-lint. Read `CLAUDE.md`, then the diff (`git diff <base>..HEAD` or as given), then the full files the diff
 touches, not only the hunks.
 
 Check, in this order:
