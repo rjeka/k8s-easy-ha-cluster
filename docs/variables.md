@@ -85,7 +85,7 @@ it the connecting user is used.
 | Variable | Default | Description |
 | --- | --- | --- |
 | `upgrade_workers_batch` | `1` | How many workers `upgrade.yml` upgrades at once. A number or a percentage. |
-| `upgrade_drain_timeout` | `5m` | Timeout for `kubectl drain`. |
+| `upgrade_drain_timeout` | `300` | Seconds to wait for pods to leave a node during the drain. |
 
 ## Playbook switches
 

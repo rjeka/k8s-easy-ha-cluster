@@ -4,16 +4,22 @@
   args:
     removes: "{{ upgrade_kube_vip_manifest }}"
 
+# Requests through the VIP may fail while it moves; those are retried too
 - name: Wait until another node holds the VIP lease
-  ansible.builtin.command: >-
-    kubectl --kubeconfig {{ upgrade_kubeconfig }} -n kube-system get lease plndr-cp-lock
-    -o jsonpath={.spec.holderIdentity}
-  delegate_to: "{{ (groups['control_plane'] | difference([inventory_hostname]))[0] }}"
-  register: upgrade_vip_holder
-  until: upgrade_vip_holder.rc == 0 and upgrade_vip_holder.stdout not in ['', inventory_hostname]
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ upgrade_kubeconfig }}"
+    api_version: coordination.k8s.io/v1
+    kind: Lease
+    namespace: kube-system
+    name: plndr-cp-lock
+  delegate_to: localhost
+  become: false
+  register: upgrade_vip_lease
+  until: >-
+    upgrade_vip_lease is succeeded and upgrade_vip_lease.resources | length > 0
+    and upgrade_vip_lease.resources[0].spec.holderIdentity | default('') not in ['', inventory_hostname]
   retries: 30
   delay: 2
-  changed_when: false
 
 # kube-vip may leave the address behind when its pod is removed
 - name: Drop the VIP from this node

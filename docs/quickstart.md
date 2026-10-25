@@ -15,11 +15,17 @@ Nodes:
 One free address in the same network for the API endpoint (`k8s_vip`). It must not belong to any
 node and must be outside the DHCP range.
 
-Machine running Ansible: ansible-core 2.16 or newer and the collections from `requirements.yml`:
+Machine running Ansible: ansible-core 2.16 or newer, the Python packages from `requirements.txt`
+(`kubernetes` for the `kubernetes.core` modules, `netaddr` for address checks) in the same Python
+environment as ansible-core, and the collections from `requirements.yml`:
 
 ```sh
+pip install -r requirements.txt
 ansible-galaxy collection install -r requirements.yml
 ```
+
+It also needs to reach `k8s_vip:k8s_api_port`: Kubernetes objects (nodes, leases, CRDs) are managed
+from there with the fetched admin kubeconfig, not with kubectl on the nodes.
 
 ## Inventory
 

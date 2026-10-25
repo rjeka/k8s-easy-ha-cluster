@@ -53,6 +53,11 @@ control plane nodes and a `k8s_vip` that is a valid address and not the `ansible
 3. Workers: join in parallel and get the `node-role.kubernetes.io/worker` label.
 4. On the first control plane node: Gateway API CRDs, Cilium, metrics-server and cert-manager.
 
+Kubernetes objects (Nodes, the kube-vip Lease, CRDs, drains) are handled with the
+`kubernetes.core` modules from the Ansible host through the VIP and the fetched admin kubeconfig.
+Shell commands remain only where no module exists: kubeadm and the etcd member list via crictl.
+Helm charts are installed with `kubernetes.core.helm` on the first control plane node.
+
 ## Re-runs and recovery
 
 Whether a control plane node is part of the cluster is decided from the etcd member list, not
@@ -62,7 +67,8 @@ the stale Node and the unstarted etcd member are removed, a VIP left on its inte
 If etcd cannot be queried at all, the play fails instead of guessing, so a transient API error
 never resets a healthy node.
 
-A worker counts as joined when its Node object exists. Otherwise it is reset and joined again.
+A worker counts as joined when its Node object exists and the node has `/etc/kubernetes/kubelet.conf`.
+Otherwise it is reset and joined again; the Node object of a reinstalled machine is deleted first.
 
 ## Versions
 

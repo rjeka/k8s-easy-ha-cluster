@@ -15,7 +15,8 @@
           - groups['control_plane'] | default([]) | length > 0
           - groups['control_plane'] | length is odd
           - k8s_vip is defined and k8s_vip is ansible.utils.ip_address
-          - k8s_vip not in (groups['k8s_cluster'] | map('extract', hostvars, 'ansible_host') | list)
+          - k8s_vip not in (groups['k8s_cluster'] | map('extract', hostvars) | selectattr('ansible_host', 'defined')
+            | map(attribute='ansible_host') | list)
         fail_msg: >-
           control_plane needs an odd number of hosts and k8s_vip must be a
           valid address that is not used by any node

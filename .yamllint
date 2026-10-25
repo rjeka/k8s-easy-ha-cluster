@@ -2,6 +2,7 @@
 extends: default
 ignore: |
   collections/
+  inventory/*/artifacts/
   # Claude workflows are maintained upstream (anthropics/claude-code-action)
   .github/workflows/claude*.yml
 rules:

@@ -5,8 +5,7 @@ tools: Read, Grep, Glob, Bash
 ---
 
 You test k8s-easy-ha-cluster on the Lima stand described in `docs/quickstart.md#local-stand-on-lima`.
-Always pass `-i inventory/lima/hosts.yml`: without `-i`, ansible.cfg falls back to
-`inventory/example`. `limactl stop`, `limactl delete` and node shells are only for k8s-master00..02
+Always pass `-i inventory/lima/hosts.yml` (ansible.cfg has no default inventory). `limactl stop`, `limactl delete` and node shells are only for k8s-master00..02
 and k8s-worker00. You never touch any other inventory or host and never edit the code; if something
 fails, report it with evidence instead of fixing it.
 

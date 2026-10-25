@@ -8,13 +8,52 @@
   ansible.builtin.include_tasks: init.yml
   when: inventory_hostname == groups['control_plane'][0]
 
+# Later tasks talk to the API from the Ansible host through the VIP with the
+# fetched admin kubeconfig, so it has to be in place before any join
+- name: Wait for the API server behind the VIP
+  ansible.builtin.uri:
+    url: "https://{{ k8s_vip }}:{{ k8s_api_port }}/readyz"
+    validate_certs: false
+  register: control_plane_readyz
+  until: control_plane_readyz.status == 200
+  retries: 30
+  delay: 5
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+- name: Create local artifacts directory
+  ansible.builtin.file:
+    path: "{{ k8s_kubeconfig_local_path | dirname }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+- name: Fetch admin kubeconfig
+  ansible.builtin.fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ k8s_kubeconfig_local_path }}"
+    flat: true
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  run_once: true
+
+- name: Restrict local admin kubeconfig
+  ansible.builtin.file:
+    path: "{{ k8s_kubeconfig_local_path }}"
+    mode: "0600"
+  delegate_to: localhost
+  become: false
+  run_once: true
+
 # Membership is decided by etcd, not by local files or the Node object: a
 # failed join can leave admin.conf and a registered Node without a member.
 # Any error listing members fails the play instead of triggering a rejoin.
 - name: List etcd members
   ansible.builtin.shell: >-
     set -o pipefail;
-    crictl exec $(crictl ps -q --name etcd | head -1) etcdctl
+    crictl exec $(crictl ps -q --name '^etcd$' --latest) etcdctl
     --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt
     --key /etc/kubernetes/pki/etcd/server.key member list -w json
   args:
@@ -62,37 +101,3 @@
     remote_src: true
     owner: "{{ ansible_user | default(ansible_user_id) }}"
     mode: "0600"
-
-- name: Wait for the API server behind the VIP
-  ansible.builtin.uri:
-    url: "https://{{ k8s_vip }}:{{ k8s_api_port }}/readyz"
-    validate_certs: false
-  register: control_plane_readyz
-  until: control_plane_readyz.status == 200
-  retries: 30
-  delay: 5
-  run_once: true
-
-- name: Create local artifacts directory
-  ansible.builtin.file:
-    path: "{{ k8s_kubeconfig_local_path | dirname }}"
-    state: directory
-    mode: "0700"
-  delegate_to: localhost
-  become: false
-  run_once: true
-
-- name: Fetch admin kubeconfig
-  ansible.builtin.fetch:
-    src: /etc/kubernetes/admin.conf
-    dest: "{{ k8s_kubeconfig_local_path }}"
-    flat: true
-  run_once: true
-
-- name: Restrict local admin kubeconfig
-  ansible.builtin.file:
-    path: "{{ k8s_kubeconfig_local_path }}"
-    mode: "0600"
-  delegate_to: localhost
-  become: false
-  run_once: true

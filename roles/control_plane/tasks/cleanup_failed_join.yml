@@ -6,11 +6,13 @@
 # kubeadm join refuses a name whose Node still reports Ready; the node is no
 # etcd member at this point, so its old Node object is stale
 - name: Delete the stale Node object
-  ansible.builtin.command: >-
-    kubectl --kubeconfig /etc/kubernetes/admin.conf delete node {{ inventory_hostname }} --ignore-not-found
-  delegate_to: "{{ groups['control_plane'][0] }}"
-  register: control_plane_node_delete
-  changed_when: control_plane_node_delete.stdout | length > 0
+  kubernetes.core.k8s:
+    kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+    kind: Node
+    name: "{{ inventory_hostname }}"
+    state: absent
+  delegate_to: localhost
+  become: false
 
 # kube-vip dies with the static pods and leaves the VIP on the interface;
 # the node would then send the join to itself
@@ -25,7 +27,7 @@
 - name: Remove the stale etcd member
   ansible.builtin.shell: >-
     set -o pipefail;
-    crictl exec $(crictl ps -q --name etcd | head -1) etcdctl
+    crictl exec $(crictl ps -q --name '^etcd$' --latest) etcdctl
     --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt
     --key /etc/kubernetes/pki/etcd/server.key
     member remove {{ '%x' | format(control_plane_etcd_member.ID) }}

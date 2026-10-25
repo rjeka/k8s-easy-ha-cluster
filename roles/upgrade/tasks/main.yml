@@ -7,12 +7,15 @@
 - name: Upgrade the node
   when: upgrade_kubelet_version.stdout != 'Kubernetes v' ~ k8s_version
   block:
+    # /version is public; k8s_cluster_info would also walk API discovery,
+    # which fails while the control plane runs mixed versions
     - name: Get cluster version
-      ansible.builtin.command: >-
-        kubectl --kubeconfig {{ upgrade_kubeconfig }} version -o json
-      delegate_to: "{{ groups['control_plane'][0] }}"
+      ansible.builtin.uri:
+        url: "https://{{ k8s_vip }}:{{ k8s_api_port }}/version"
+        validate_certs: false
+      delegate_to: localhost
+      become: false
       register: upgrade_cluster_version
-      changed_when: false
 
     # kubeadm upgrades one minor version at a time
     - name: Check upgrade path
@@ -22,7 +25,7 @@
           - (_target.split('.')[1] | int) - (_current.split('.')[1] | int) <= 1
         fail_msg: "Cannot go from {{ _current }} to {{ _target }}: one minor version at a time"
       vars:
-        _current: "{{ (upgrade_cluster_version.stdout | from_json).serverVersion.gitVersion | regex_replace('^v', '') }}"
+        _current: "{{ upgrade_cluster_version.json.gitVersion | regex_replace('^v', '') }}"
         _target: "{{ k8s_version }}"
 
     - name: Switch the Kubernetes apt repository
@@ -55,11 +58,16 @@
       changed_when: true
 
     - name: Drain the node
-      ansible.builtin.command: >-
-        kubectl --kubeconfig {{ upgrade_kubeconfig }} drain {{ inventory_hostname }}
-        --ignore-daemonsets --delete-emptydir-data --timeout={{ upgrade_drain_timeout }}
-      delegate_to: "{{ groups['control_plane'][0] }}"
-      changed_when: true
+      kubernetes.core.k8s_drain:
+        kubeconfig: "{{ upgrade_kubeconfig }}"
+        name: "{{ inventory_hostname }}"
+        state: drain
+        delete_options:
+          ignore_daemonsets: true
+          delete_emptydir_data: true
+          wait_timeout: "{{ upgrade_drain_timeout }}"
+      delegate_to: localhost
+      become: false
 
     - name: Upgrade kubelet and kubectl
       ansible.builtin.apt:
@@ -81,17 +89,25 @@
         daemon_reload: true
 
     - name: Wait for the node to become Ready
-      ansible.builtin.command: >-
-        kubectl --kubeconfig {{ upgrade_kubeconfig }} wait --for=condition=Ready
-        node/{{ inventory_hostname }} --timeout=5m
-      delegate_to: "{{ groups['control_plane'][0] }}"
-      changed_when: false
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ upgrade_kubeconfig }}"
+        kind: Node
+        name: "{{ inventory_hostname }}"
+        wait: true
+        wait_condition:
+          type: Ready
+          status: "True"
+        wait_timeout: 300
+      delegate_to: localhost
+      become: false
 
     - name: Uncordon the node
-      ansible.builtin.command: >-
-        kubectl --kubeconfig {{ upgrade_kubeconfig }} uncordon {{ inventory_hostname }}
-      delegate_to: "{{ groups['control_plane'][0] }}"
-      changed_when: true
+      kubernetes.core.k8s_drain:
+        kubeconfig: "{{ upgrade_kubeconfig }}"
+        name: "{{ inventory_hostname }}"
+        state: uncordon
+      delegate_to: localhost
+      become: false
 
   # A node that failed halfway stays cordoned on purpose: workloads must not
   # land on a half-upgraded kubelet. Fix it, rerun upgrade.yml or uncordon.

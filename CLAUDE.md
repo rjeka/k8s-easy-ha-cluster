@@ -15,9 +15,11 @@ for the API endpoint, Cilium with Gateway API. User docs are in `README.md` and 
 
 ## Rules
 
-- Always pass `-i` to `ansible-playbook`. Without it ansible.cfg falls back to `inventory/example`,
-  the template users copy. Agents run playbooks only against `inventory/lima/hosts.yml` unless the
-  user explicitly names another inventory.
+- Always pass `-i` to `ansible-playbook` (ansible.cfg has no default inventory). Agents run playbooks
+  only against `inventory/lima/hosts.yml` unless the user explicitly names another inventory.
+- Kubernetes objects are managed with `kubernetes.core` modules delegated to localhost with
+  `kubeconfig: "{{ k8s_kubeconfig_local_path }}"` and `become: false`, never with kubectl in
+  `command`/`shell`. Shell is only for tools without a module (kubeadm, etcdctl via crictl).
 - Every role must be idempotent: a second `site.yml` run on a healthy cluster reports `changed=0`
   on every host. Give `command`/`shell` tasks a real `changed_when`.
 - Role variables are prefixed with the role name (ansible-lint `var-naming`); cluster-wide

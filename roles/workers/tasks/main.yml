@@ -1,17 +1,34 @@
 ---
-# Ask the cluster rather than trusting kubelet.conf: a failed join can leave
-# it behind without a registered Node. Errors other than NotFound fail.
+# A worker counts as joined only with both a registered Node and a local
+# kubelet.conf: a failed join can leave kubelet.conf without a Node, and a
+# reinstalled machine leaves a stale Node without kubelet.conf.
+- name: Check for kubelet.conf
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: workers_kubelet_conf
+
+# An unreachable API fails the task instead of triggering a rejoin
 - name: Check whether the node is registered in the cluster
-  ansible.builtin.command: >-
-    kubectl --kubeconfig /etc/kubernetes/admin.conf get node {{ inventory_hostname }} -o name
-  delegate_to: "{{ groups['control_plane'][0] }}"
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+    kind: Node
+    name: "{{ inventory_hostname }}"
+  delegate_to: localhost
+  become: false
   register: workers_registered
-  changed_when: false
-  failed_when: workers_registered.rc != 0 and 'NotFound' not in workers_registered.stderr
 
 - name: Join the cluster
-  when: workers_registered.rc != 0
+  when: workers_registered.resources | length == 0 or not workers_kubelet_conf.stat.exists
   block:
+    - name: Remove the stale Node of a reinstalled machine
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+        kind: Node
+        name: "{{ inventory_hostname }}"
+        state: absent
+      delegate_to: localhost
+      become: false
+
     - name: Clean up a previous failed join
       ansible.builtin.command: kubeadm reset --force
       args:
@@ -35,9 +52,14 @@
       changed_when: true
 
 - name: Label worker node
-  ansible.builtin.command: >-
-    kubectl --kubeconfig /etc/kubernetes/admin.conf
-    label node {{ inventory_hostname }} node-role.kubernetes.io/worker= --overwrite
-  delegate_to: "{{ groups['control_plane'][0] }}"
-  register: workers_label
-  changed_when: "'not labeled' not in workers_label.stdout"
+  kubernetes.core.k8s:
+    kubeconfig: "{{ k8s_kubeconfig_local_path }}"
+    kind: Node
+    name: "{{ inventory_hostname }}"
+    state: patched
+    definition:
+      metadata:
+        labels:
+          node-role.kubernetes.io/worker: ""
+  delegate_to: localhost
+  become: false

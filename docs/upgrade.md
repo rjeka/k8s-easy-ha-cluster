@@ -15,8 +15,8 @@ minor version can be skipped.
    ansible-playbook -i inventory/mycluster/hosts.yml upgrade.yml
    ```
 
-5. Run `site.yml` once more. It records the new version in the kubeadm configuration on the first
-   control plane node; after that it reports no changes.
+5. Run `site.yml` once more. It records the new version in the kubeadm configuration and copies the
+   admin kubeconfigs that kubeadm renewed; after that it reports no changes.
 
 `upgrade.yml` goes through the control plane nodes one at a time, the first one first, then through
 the workers in batches of `upgrade_workers_batch` (1 by default). On each node it:
@@ -28,7 +28,7 @@ the workers in batches of `upgrade_workers_batch` (1 by default). On each node i
    control plane node the API stays reachable through the VIP during the whole upgrade.
 4. Runs `kubeadm upgrade apply` on the first control plane node and `kubeadm upgrade node` on the
    others.
-5. Drains the node, upgrades kubelet and kubectl, holds the packages again and restarts kubelet.
+5. Drains the node (after the kubeadm step, in the order of the upstream kubeadm upgrade guide), upgrades kubelet and kubectl, holds the packages again and restarts kubelet.
 6. Waits for the node to become Ready and uncordons it.
 7. Puts the kube-vip manifest back, also when a step failed.
 

@@ -12,7 +12,8 @@ How to work:
 1. Make the smallest change that solves the task, in the style of the surrounding role: fully
    qualified module names, task names in sentence case, variables prefixed with the role name,
    comments only where the reason is not obvious.
-2. Keep every task idempotent. `command` and `shell` need a `changed_when` that reflects reality;
+2. Use `kubernetes.core` modules for Kubernetes objects, never kubectl in `command`/`shell`.
+   Keep every task idempotent. `command` and `shell` need a `changed_when` that reflects reality;
    prefer modules that report changes themselves.
 3. Anything that can reset, drain or remove a node must fail closed: if the state cannot be read,
    fail the play instead of guessing.
@@ -21,7 +22,7 @@ How to work:
 5. When you add or rename a variable, update `inventory/example`, `inventory/lima` and
    `docs/variables.md`. When behaviour changes, update the matching page in `docs/`.
 6. Run the `checks` skill (lint and syntax). Run playbooks only with `-i inventory/lima/hosts.yml`
-   (without `-i` ansible.cfg falls back to `inventory/example`); leave stand runs to the
+   (ansible.cfg has no default inventory); leave stand runs to the
    `stand-tester` agent unless asked.
 
 Report what you changed (files and why), the check results, and what still needs a stand run.

@@ -17,11 +17,14 @@ endpoint and Cilium as CNI with Gateway API.
 - Rolling upgrades without API downtime (with three or more control plane nodes), safe re-runs (a second run changes nothing) and recovery of half-joined nodes.
 
 Supported nodes: Ubuntu 22.04 and 24.04 (Debian 12 is accepted but not tested yet) on amd64 or arm64.
-The machine running Ansible needs ansible-core 2.16 or newer.
+The machine running Ansible needs ansible-core 2.16 or newer, the Python packages from
+`requirements.txt` and access to the API VIP: cluster objects are managed with the `kubernetes.core`
+modules from there.
 
 ## Quick start
 
 ```sh
+pip install -r requirements.txt       # into the Python environment of ansible-core
 ansible-galaxy collection install -r requirements.yml
 cp -r inventory/example inventory/mycluster
 # edit inventory/mycluster/hosts.yml and group_vars/all.yml (addresses, k8s_vip, k8s_vip_interface)

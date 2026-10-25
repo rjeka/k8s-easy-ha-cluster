@@ -34,7 +34,7 @@ ansible-playbook -i inventory/lima/hosts.yml upgrade.yml
 touch "$flag"; wait; rm -f "$flag"
 
 kubectl get nodes   # every node on the new version, Ready
-stand/test.sh       # first run converges the kubeadm config, second must be changed=0
+stand/test.sh       # first run converges kubeadm config and kubeconfigs, second must be changed=0
 ```
 
 The upgrade passes when every node reports the new version, no node is cordoned and the probe loop

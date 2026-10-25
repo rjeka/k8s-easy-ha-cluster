@@ -58,6 +58,8 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
 - Pin Helm charts and the kube-vip image by digest; pin the pkgs.k8s.io key fingerprint.
 - Pin collection versions, CI pip packages and GitHub Actions by commit SHA.
 - `reset.yml`: require `reset_confirm` to equal `k8s_cluster_name`; remove kubeadm join configs after joining.
+- Turn on SSH host key checking (`host_key_checking = False` in ansible.cfg suits throwaway stand VMs only).
+- `join_info.yml` combines `run_once` with `when`; harmless while it is only included for one group, brittle if reused.
 - Audit log, Secret encryption at rest, Pod Security Admission, CA-signed kubelet serving certificates, scheduled etcd backups.
 
 ## Later

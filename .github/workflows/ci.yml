@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: "3.13"
       - name: Install tools
-        run: pip install ansible-core ansible-lint yamllint
+        run: pip install ansible-core ansible-lint yamllint -r requirements.txt
       - name: Install collections
         run: ansible-galaxy collection install -r requirements.yml -p collections
       - name: yamllint
