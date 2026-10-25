@@ -36,7 +36,7 @@ Branch `ansible-rewrite`. The previous version is tagged `legacy-2024`.
     - Ubuntu 22.04 cannot be tested on the M4 stand (kernel 5.15: Python cryptography dies with SIGILL),
       CI covers it on amd64. Debian 12 still untested.
 13. [x] English docs: README, architecture diagram (archify), quickstart, variables, upgrade, troubleshooting
-14. [ ] Claude files: project CLAUDE.md, agents (ansible dev, reviewer, stand tester), skills (stand up, checks, k8s upgrade)
+14. [x] Claude files: project CLAUDE.md, agents (ansible dev, reviewer, stand tester), skills (stand up, checks, k8s upgrade)
 
 ## CI (to plan)
 
