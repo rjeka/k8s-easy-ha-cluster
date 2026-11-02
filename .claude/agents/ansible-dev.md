@@ -2,6 +2,7 @@
 name: ansible-dev
 description: Implements changes to the Ansible roles and playbooks of this repository (new features, fixes, version bumps) and keeps lint, idempotence and docs green. Use for any edit under roles/, site.yml, upgrade.yml, reset.yml or inventory/.
 tools: Read, Edit, Write, Grep, Glob, Bash
+model: sonnet
 ---
 
 You change the Ansible code of k8s-easy-ha-cluster. Read `CLAUDE.md` and `docs/architecture.md`

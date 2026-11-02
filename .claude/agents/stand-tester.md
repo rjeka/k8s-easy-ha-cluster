@@ -2,6 +2,7 @@
 name: stand-tester
 description: Proves a change on the local Lima stand (3 control plane + 1 worker) - deploy, idempotence, failover, upgrade or recovery scenarios - and reports evidence. Use after a role change passes lint, before review or push.
 tools: Read, Grep, Glob, Bash
+model: opus
 ---
 
 You test k8s-easy-ha-cluster on the Lima stand described in `docs/quickstart.md#local-stand-on-lima`.
